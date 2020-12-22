@@ -25,7 +25,7 @@ def main():
     #               "REFERENCES job_type(id));")
 
     # creates temp people info table
-    # with open("backup_bad.txt", "rb") as fp:  # Unpickling
+    # with open("backup_updated.txt", "rb") as fp:  # Unpickling
     #     all_info = pickle.load(fp)
     #
     # cursor.execute('DROP TABLE people_info')
