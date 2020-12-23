@@ -7,6 +7,7 @@ def DatabaseError(error):
 
 
 def get_from_option(option, country):
+    # query = f"SELECT Name, DiedIn FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country} ')"
     if option == 1:
         query = f"SELECT Name, DiedIn FROM people_info WHERE DiedIn='{country} ' ORDER BY RAND() LIMIT 1;"
         keyword = "has died"
@@ -65,7 +66,9 @@ def get_random_country():
 def get_all_related():
     print("get people")
     country = request.args.get('country')
+    # born_query = f"SELECT Name FROM people_info WHERE BornIn=(SELECT id FROM locations WHERE location='{country} ');"
     born_query = f"SELECT Name FROM people_info WHERE BornIn='{country} ';"
+    # died_query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country} ');"
     died_query = f"SELECT Name FROM people_info WHERE DiedIn='{country} ';"
     try:
         cursor = db.cursor()
