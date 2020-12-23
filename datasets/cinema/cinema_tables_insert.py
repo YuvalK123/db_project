@@ -98,7 +98,8 @@ def get_directors_movies(movies_genres):
                 movies_directors[director] = [movie]
             else:
                 movies_directors[director].append(movie)
-
+    print("set of dirs")
+    print(directors_movies_set)
     # get genres for directors movies
     directors_movies_genres = assign_movies_genres(movies_genres, directors_movies_set)
     return directors_movies_genres, movies_directors
@@ -129,6 +130,7 @@ def get_genres():
         next(reader, None)  # skip header
         for line in reader:
             title, string = line[8], json.loads(json.dumps(line[3]))
+            print(title, string)
             if 'Written by' in string or 'Production' in string:  # skip unwanted lines
                 continue
             tmps = re.findall(regex_txt, string)  # find all genres
@@ -143,6 +145,16 @@ def get_genres():
         return dic, genres
 
 
+def generate_rand_genres(genres_keys):
+    import random
+    num, genres = random.randint(1, 4), []
+    genres_keys = [g for g in genres_keys]
+    for i in range(num):
+        genres.append(random.choice(genres_keys))
+    return genres
+
+
+
 def assign_movies_genres(movies_genres, movies_set):
     """
     function maps movies in dataset to their genre
@@ -151,12 +163,14 @@ def assign_movies_genres(movies_genres, movies_set):
     :return: dictionary from relevant movie dataset to it's genres. {movie: [genres], ...}
     """
     dic, keys = {}, movies_genres.keys()
+    genres_amount = get_genres_id().keys()
+    print("keys", genres_amount)
     for movie in movies_set:
-        dic[movie] = movies_genres[movie] if movie in keys else []
-        # if movie in keys:
-        #     dic[movie] = movies_genres[movie]
-        # else:
-        #     dic[movie] = []
+        #dic[movie] = movies_genres[movie] if movie in keys else []
+        if movie in keys:
+            dic[movie] = movies_genres[movie]
+        else:
+            dic[movie] = []  # generate_rand_genres(genres_amount)
     return dic
 
 
@@ -184,7 +198,7 @@ def movies_table(movies_list):
     db.disconnect()
 
 
-def pid_table(movies, table_title="actors_movies"):
+def pid_table(movies, table_title="people_movies"):
     """
     function creates table with the given title for (pid, movieId)
     :param movies: dictionary {person: [movies],...}
@@ -199,9 +213,11 @@ def pid_table(movies, table_title="actors_movies"):
     )
     cursor = db.cursor()
     query = f"CREATE TABLE {table_title} (pid MEDIUMINT, movieId MEDIUMINT);"
-    cursor.execute(query)
-    db.commit()
-
+    try:
+        cursor.execute(query)
+        db.commit()
+    except Exception: # table created
+        pass
     # gets pid and movieId
     id_name_query = " SELECT id, movieName FROM movies "
     cursor.execute(id_name_query)
@@ -248,7 +264,6 @@ def genres_table(genres):
     :param genres: set of genres
     :return: None
     """
-    print(genres)
     genres_db = [(genre,) for genre in genres]
     max_len = len(max(genres, key=len)) + 10  # , key=lambda t: len(t)) + 10
     db = mysql.connect(
@@ -269,18 +284,6 @@ def genres_table(genres):
 
 
 def genres_to_id(genres_to_conv, genres_map):
-    # db = mysql.connect(
-    #     host="localhost",
-    #     user="root",
-    #     passwd=PASSWORD,
-    #     database=DATABASE
-    # )
-    # cursor, final_genres = db.cursor(), []
-    # genres_query = " SELECT id, genre FROM genres "
-    # cursor.execute(genres_query)
-    # genres = cursor.fetchall()  # [(1, 'western'), ...]
-    # db.disconnect()
-    # genres = convert_list_to_dict(genres, True)
     final_genres = []
     for genre in genres_to_conv:
         final_genres.append(genres_map[genre])
@@ -334,18 +337,20 @@ def main():
     print("genres")
     movies_genres, genres = get_genres()
     print("generates genres")
-    genres_table(genres)
+    #genres_table(genres)
     print("movies")
     actors_movies_genres, actors_movies = get_actors_movies(movies_genres)
     directors_movies_genres, movies_directors = get_directors_movies(movies_genres)
     print("unites lists")
     movies_list = unite_movies(actors_movies_genres, directors_movies_genres)
+    print(movies_list)
+    print(len(movies_list))
     print("generate movies table")
-    movies_table(movies_list)
+    # movies_table(movies_list)
     print("generate actors movies")
-    pid_table(actors_movies, "actorsMovies")
+    pid_table(actors_movies)
     print("generate directors movies")
-    pid_table(movies_directors, "directorsMovies")
+    pid_table(movies_directors)
 
 
 if __name__ == '__main__':
