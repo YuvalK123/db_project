@@ -2,16 +2,9 @@ import mysql.connector as mysql
 
 PASSWORD = "1q2w3E4R"
 DATABASE = "GlobalInfoApp"
-db = mysql.connect(
-    host="localhost",
-    user="root",
-    passwd=PASSWORD,
-    database=DATABASE
-)
-cursor = db.cursor()
 
 
-def create_game_table():
+def create_game_table(db, cursor):
     # gid, uid, current_score, strikes
     query = "CREATE TABLE games (id MEDIUMINT PRIMARY KEY NOT NULL AUTO_INCREMENT, " \
             "uid MEDIUMINT,current_score SMALLINT, strikes TINYINT, current_location MEDIUMINT);"
@@ -22,21 +15,21 @@ def create_game_table():
     db.commit()
 
 
-def letter_table():
+def letter_table(db, cursor):
     # gid, char
     query = "CREATE TABLE game_letter (gid MEDIUMINT NOT NULL, letter CHAR(1)); "
     cursor.execute(query)
     db.commit()
 
 
-def locations_table():
+def locations_table(db, cursor):
     # gid, location
     query = "CREATE TABLE game_locations (gid MEDIUMINT NOT NULL, location MEDIUMINT); "
     cursor.execute(query)
     db.commit()
 
 
-def users():
+def users(db, cursor):
     # uid, username, password, age, gender
     query = f"CREATE TABLE users (id MEDIUMINT PRIMARY KEY NOT NULL AUTO_INCREMENT, username VARCHAR(20)," \
             f"password VARCHAR(25), age TINYINT, gender CHAR(1)); "
@@ -46,7 +39,7 @@ def users():
     db.commit()
 
 
-def make_users():
+def make_users(db, cursor):
     username, password, age, gender = "user", 12345, 26, "m"
     query = f"INSERT INTO users (username, password, age, gender) " \
             f"VALUES('{username}', {password}, {age}, '{gender}')"
@@ -67,7 +60,7 @@ def make_users():
     db.commit()
 
 
-def create_games():
+def create_games(db, cursor):
     # games =  gid, uid, current_score, strikes, current_location
     # locations = gid, location
     # letters = gid, letter
@@ -84,14 +77,22 @@ def create_games():
     db.commit()
 
 
+def load(db, path):
+    cursor = db.cursor()
+    create_game_table(db, cursor)
+    letter_table(db, cursor)
+    locations_table(db, cursor)
+    users(db, cursor)
+    make_users(db, cursor)
+    create_games(db, cursor)
 
-def main():
-    # create_game_table()
-    # letter_table()
-    # locations_table()
-    users()
-    make_users()
-    # create_games()
+# def main():
+#     create_game_table()
+#     letter_table()
+#     locations_table()
+#     users()
+#     make_users()
+#     create_games()
 
 
 if __name__ == '__main__':
