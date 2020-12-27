@@ -3,7 +3,7 @@ from datetime import datetime
 import random
 
 
-def DatabaseError(error):
+def DatabaseError(error=None):
     return 'Database connection failed', 500
 
 
@@ -79,12 +79,9 @@ def get_all_related():
         cursor.execute(died_query)
         died_country = cursor.fetchall()
         died_country = [x[0] for x in died_country]
-        print(died_country)
-        print("cool")
         b = ",".join(born_country)
         d = ",".join(died_country)
         ret = str(b + "|||" + d)
-        print(ret)
         return ret
     except Exception as e:
         print(e)
@@ -108,13 +105,36 @@ def users():
 
 @app.route('/getgame', methods=['GET'])
 def get_game():
-    parameters, args, cursor = GAME_PARAMETERS, request.args.get, db.cursor()
-    curr_location, countries, letters, strikes, score = parameters["curr_country"], parameters["countries"], \
-                                                        parameters["letters"], parameters["strikes"], \
-                                                        parameters["score"]
-    curr_location, countries, letters, strikes, score, user = args(curr_location), args(countries), args(letters), \
-                                                              args(strikes), args(score), args(user)
-
+    user = request.args.get(GAME_PARAMETERS["user"])
+    ret_value = {"score": None, "letters": None, "curr_country": None, "countries": None,
+                 "strikes": None, "gid": None}
+    try:
+        cursor = db.cursor()
+        query = f"SELECT id, current_score, strikes, current_location FROM games WHERE uid={user};"
+        cursor.execute(query)
+        game_record = cursor.fetchone()
+        if not game_record:
+            return "null"
+        ret_value["gid"], ret_value["score"], ret_value["strikes"], ret_value["curr_country"] = game_record
+        ret_value["curr_country"] = id_to_country(ret_value["curr_country"])
+        game_id = ret_value["gid"]
+        query = f"SELECT letter FROM game_letter WHERE gid={game_id}"
+        cursor.execute(query)
+        letters_records = cursor.fetchall()
+        if letters_records:
+            letters = [letter[0] for letter in letters_records]
+            ret_value["letters"] = ",".join(letters)
+        query = f"SELECT location FROM globalinfoapp.locations WHERE id IN " \
+                f"(SELECT location FROM game_locations WHERE gid={game_id});"
+        cursor.execute(query)
+        locations_records = cursor.fetchall()
+        if locations_records:
+            locations = (location[0] for location in locations_records)
+            ret_value["countries"] = ", ".join(locations)
+    except Exception as e:
+        print(e)
+        return DatabaseError(e)
+    return json.dumps(ret_value)
 
 @app.route('/gameover')
 def delete_game():
@@ -219,9 +239,6 @@ def save_game():
         print(e)
         return DatabaseError(e)
     return str(game_id)
-
-
-
 
 
 @app.route('/', methods=['GET', 'POST'])
