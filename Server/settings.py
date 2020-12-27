@@ -7,13 +7,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 PORT = 3000
-# db_params = yaml.load(open('db.yaml'))
-# PASSWORD = db_params['mysql_password']
-# DATABASE = db_params['mysql_db']
-# USER = db_params['mysql_user']
-# HOST = db_params['mysql_host']
-# app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://{USER}:{PASSWORD}@{HOST}/{DATABASE}'
-# db = SQLAlchemy(app)
+GAME_PARAMETERS = {"score": "score", "letters": "letters", "countries": "countries", "curr_country": "country",
+                   "strikes": "strikes", "user": "uid", "game": "gid"}
 
 mysql = MySQL()
 db_params = yaml.load(open('db.yaml'))

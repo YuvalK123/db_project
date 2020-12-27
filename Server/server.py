@@ -2,6 +2,7 @@ from settings import *
 from datetime import datetime
 import random
 
+
 def DatabaseError(error):
     return 'Database connection failed', 500
 
@@ -16,7 +17,7 @@ def get_from_option(option, country):
         keyword = "was born"
     return query, keyword
 
-i = 0
+
 @app.route('/hint')
 def get_hint():
     options = ["bornin, diedin, restaurant"]
@@ -103,6 +104,124 @@ def users():
             print("e", e)
     print('a')
     return redirect('/')
+
+
+@app.route('/getgame', methods=['GET'])
+def get_game():
+    parameters, args, cursor = GAME_PARAMETERS, request.args.get, db.cursor()
+    curr_location, countries, letters, strikes, score = parameters["curr_country"], parameters["countries"], \
+                                                        parameters["letters"], parameters["strikes"], \
+                                                        parameters["score"]
+    curr_location, countries, letters, strikes, score, user = args(curr_location), args(countries), args(letters), \
+                                                              args(strikes), args(score), args(user)
+
+
+@app.route('/gameover')
+def delete_game():
+    game_id = GAME_PARAMETERS["game"]
+    try:
+        cursor = db.cursor()
+        letters_query = f"DELETE FROM game_letter WHERE gid={game_id}"
+        cursor.execute(letters_query)
+        locations_query = f"DELETE FROM game_locations WHERE gid={game_id}"
+        cursor.execute(letters_query)
+        db.commit()
+        game_query = f"DELETE FROM games WHERE gid={game_id}"
+        cursor.execute(letters_query)
+        db.commit()
+        return "200"
+    except Exception as e:
+        print(e)
+        return DatabaseError(e)
+
+
+def id_to_country(country_id=None):
+    if not country_id:
+        return None
+    query = f"SELECT Location FROM locations WHERE id={country_id}"
+    try:
+        cursor = db.cursor()
+        cursor.execute(query)
+        record = cursor.fetchone()
+        return record[0]
+    except Exception as e:
+        print(e)
+        return None
+
+
+def country_to_id(country=None):
+    if not country:
+        return None
+    query = f"SELECT id FROM locations WHERE Location='{country}';"
+    print(query)
+    try:
+        cursor = db.cursor()
+        cursor.execute(query)
+        record = cursor.fetchone()
+        return record[0]
+    except Exception as e:
+        print(e)
+        return None
+
+
+@app.route('/savegame', methods=['POST'])
+def save_game():
+    parameters, args, cursor = GAME_PARAMETERS, request.args.get, db.cursor()
+    curr_location, countries, letters, strikes, score, user = parameters["curr_country"], parameters["countries"], \
+                                                        parameters["letters"], parameters["strikes"], \
+                                                        parameters["score"], parameters["user"]
+    curr_location, countries, letters, strikes, score, user = args(curr_location), args(countries), args(letters), \
+                                                        args(strikes), args(score), args(user)
+    print(curr_location, countries, letters, strikes, score, user)
+    curr_location = country_to_id(curr_location)
+    print("curr location", curr_location)
+    get_query = f"SELECT id FROM games WHERE uid={user};"
+    cursor.execute(get_query)
+    game_record = cursor.fetchone()
+    game_exists, game_id = False, -1
+    print(game_record)
+    if game_record:
+        game_exists = True
+        game_id = game_record[0]
+    if game_exists:
+        game_query = f"INSERT INTO games (uid, current_score, strikes, current_location) VALUES " \
+                f"({user}, {score}, {strikes}, {curr_location});"
+    else:
+        game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}, " \
+                f"current_location = {curr_location} WHERE uid={user};"
+        delete_query = f"DELETE FROM game_letter WHERE gid={game_id};"
+        cursor.execute(delete_query)
+        db.commit()
+
+    cursor.execute(game_query)
+    db.commit()
+    if not game_exists:
+        cursor.execute(get_query)
+        game_record = cursor.fetchone()
+        game_id = game_record[0]
+
+    # insert letters and locations
+    letters_arr, locations = letters.split(","), countries.split(",")
+    letters_arr = [(game_id, letter) for letter in letters_arr]
+    try:
+        if len(letters_arr) > 0:
+            query = "INSERT INTO game_letter (gid, letter) VALUES (%s, %s);"
+            cursor.executemany(query, letters_arr)
+        if len(locations) > 0:
+            locations_arr = []
+            for location in locations:
+                locations_arr.append(country_to_id(location))
+            locations = [(game_id, location) for location in locations_arr if location is not None]
+            query = "INSERT INTO game_locations (gid, location) VALUES (%s, %s);"
+            cursor.executemany(query, locations)
+        db.commit()
+    except Exception as e:
+        print(e)
+        return DatabaseError(e)
+    return str(game_id)
+
+
+
 
 
 @app.route('/', methods=['GET', 'POST'])

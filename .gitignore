@@ -1,2 +1,7 @@
 */venv
 */venv/
+*.yaml
+Server/.idea/*
+Server/__pycache__/*
+datasets/loading/.idea/*
+
