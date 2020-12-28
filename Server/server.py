@@ -21,16 +21,12 @@ def get_from_option(option, country):
 @app.route('/hint')
 def get_hint():
     options = ["bornin, diedin, restaurant"]
-    global i
-    print(i)
-    i += 1
     try:
         cursor = db.cursor()
         option, country = random.randint(1, 2), request.args.get('country')
         query, keyword = get_from_option(option, country)
         cursor.execute(query)
         result = cursor.fetchall()
-        print("result", result)
         if len(result) > 0:
             record = result[0]
             result = f"{record[0]} {keyword} there"
@@ -50,8 +46,11 @@ def get_hint():
 
 @app.route('/get_country')
 def get_random_country():
-    print("random")
-    query = "SELECT location FROM locations ORDER BY RAND() LIMIT 1"
+    user = request.args.get(GAME_PARAMETERS["user"])
+    query = f"SELECT location FROM globalinfoapp.locations WHERE id NOT IN " \
+            f"(SELECT location FROM game_locations WHERE gid=(SELECT id FROM games WHERE uid={user} LIMIT 1)) " \
+            f"ORDER BY RAND() LIMIT 1;"
+    # query = "SELECT location FROM locations ORDER BY RAND() LIMIT 1"
     try:
         cursor = db.cursor()
         cursor.execute(query)
@@ -65,7 +64,6 @@ def get_random_country():
 
 @app.route('/get_people')
 def get_all_related():
-    print("get people")
     country = request.args.get('country')
     # born_query = f"SELECT Name FROM people_info WHERE BornIn=(SELECT id FROM locations WHERE location='{country} ');"
     born_query = f"SELECT Name FROM people_info WHERE BornIn='{country} ';"
@@ -81,8 +79,8 @@ def get_all_related():
         died_country = [x[0] for x in died_country]
         b = ",".join(born_country)
         d = ",".join(died_country)
-        ret = str(b + "|||" + d)
-        return ret
+        ret = {"born": b, "died": d}
+        return json.dumps(ret)
     except Exception as e:
         print(e)
         return DatabaseError(e)
@@ -106,15 +104,14 @@ def users():
 @app.route('/getgame', methods=['GET'])
 def get_game():
     user = request.args.get(GAME_PARAMETERS["user"])
-    ret_value = {"score": None, "letters": None, "curr_country": None, "countries": None,
-                 "strikes": None, "gid": None}
+    ret_value = {"score": None, "letters": None, "curr_country": None, "strikes": None, "gid": None}
     try:
         cursor = db.cursor()
         query = f"SELECT id, current_score, strikes, current_location FROM games WHERE uid={user};"
         cursor.execute(query)
         game_record = cursor.fetchone()
         if not game_record:
-            return "null"
+            return json.dumps(None)
         ret_value["gid"], ret_value["score"], ret_value["strikes"], ret_value["curr_country"] = game_record
         ret_value["curr_country"] = id_to_country(ret_value["curr_country"])
         game_id = ret_value["gid"]
@@ -124,6 +121,8 @@ def get_game():
         if letters_records:
             letters = [letter[0] for letter in letters_records]
             ret_value["letters"] = ",".join(letters)
+
+        '''
         query = f"SELECT location FROM globalinfoapp.locations WHERE id IN " \
                 f"(SELECT location FROM game_locations WHERE gid={game_id});"
         cursor.execute(query)
@@ -131,6 +130,7 @@ def get_game():
         if locations_records:
             locations = (location[0] for location in locations_records)
             ret_value["countries"] = ", ".join(locations)
+        '''
     except Exception as e:
         print(e)
         return DatabaseError(e)
