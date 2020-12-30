@@ -62,9 +62,15 @@ def get_random_country():
         return DatabaseError(e)
 
 
+app.route('/movies')
+def get_person_movies():
+    pass
+
+
 @app.route('/get_people')
 def get_all_related():
     country = request.args.get('country')
+    country = country_to_id(country)
     # born_query = f"SELECT Name FROM people_info WHERE BornIn=(SELECT id FROM locations WHERE location='{country} ');"
     born_query = f"SELECT Name FROM people_info WHERE BornIn='{country} ';"
     # died_query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country} ');"
@@ -88,17 +94,40 @@ def get_all_related():
 
 @app.route('/users', methods=['GET', 'POST'], )
 def users():
+    username, psw = request.args.get('user'), request.args.get('pass')
+    uid, is_admin = -1, False
     if request.method == 'POST':
-        # add user
-        pass
+        gender, age = request.args.get('gender'), request.args.get('age')
+        if not gender:
+            gender = ''
+        if not age:
+            age = -1
+        query = f"INSERT INTO users (username, password, age, gender) VALUES " \
+                     f"('{username}', '{psw}', {age}, '{gender}');"
+        cursor = db.cursor()
+        cursor.execute(query)
+        db.commit()
+        query = f"SELECT id FROM users WHERE (username='{username}' AND password='{psw}') LIMIT 1;"
+        cursor.execute(query)
+        record = cursor.fetchone()
+        if record:
+            uid = record[0]
     else:
         try:
-            arg1 = request.args.get('user')
-            print(arg1)
+            cursor = db.cursor()
+            query = f"SELECT id FROM users WHERE (username='{username}' AND password='{psw}') LIMIT 1;"
+            cursor.execute(query)
+            record = cursor.fetchone()
+            if record:
+                uid = record[0]
+                query = f"SELECT uid from admins WHERE uid={uid} LIMIT 1;"
+                cursor.execute(query)
+                r = cursor.fetchone()
+                if r:
+                    is_admin = True
         except Exception as e:
             print("e", e)
-    print('a')
-    return redirect('/')
+    return json.dumps({"uid": uid, "admin": is_admin})
 
 
 @app.route('/getgame', methods=['GET'])
@@ -193,7 +222,8 @@ def save_game():
     curr_location, countries, letters, strikes, score, user = args(curr_location), args(countries), args(letters), \
                                                         args(strikes), args(score), args(user)
     print(curr_location, countries, letters, strikes, score, user)
-    curr_location = country_to_id(curr_location)
+    if str(curr_location) != "-1":
+        curr_location = country_to_id(curr_location)
     print("curr location", curr_location)
     get_query = f"SELECT id FROM games WHERE uid={user};"
     cursor.execute(get_query)
