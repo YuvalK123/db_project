@@ -140,7 +140,6 @@ def get_random_country():
 
 app.route('/movies')
 def get_person_movies():
-<<<<<<< HEAD
     person = request.args.get('person')
     ret = {"gender": "", "actedIn": [], "directed": []}
     if not person:
@@ -159,9 +158,7 @@ def get_person_movies():
         print(e)
         return DatabaseError(e)
     return json.dumps(ret)
-=======
     pass
->>>>>>> a208ab830afb0a9a6ad5c877e085bfa4a73c3673
 
 
 @app.route('/get_people')
