@@ -71,19 +71,21 @@ def csv_to_dict(file_name):
 #######################################################
 
 
-def pid_table(db, movies, table_title="people_movies"):
+def pid_table(db, movies, id_val, table_title="people_movies"):
     """
     function creates table with the given title for (pid, movieId)
     :param db: database connection
     :param movies: dictionary {person: [movies],...}
+    :param id_val: 0 if actor, 1 if director
     :param table_title: title of table
     :return: None
     """
     cursor = db.cursor()
     # query = f"CREATE TABLE {table_title} (pid MEDIUMINT, FOREIGN KEY(pid) REFERENCES people_info(id), " \
     #         f"movieId MEDIUMINT, FOREIGN KEY(movieId) REFERENCES movies(id));"
-    query = f"CREATE TABLE {table_title} (pid MEDIUMINT, " \
-            f"movieId MEDIUMINT, FOREIGN KEY(movieId) REFERENCES movies(id));"
+    query = f"CREATE TABLE {table_title} (pid MEDIUMINT UNSIGNED, FOREIGN KEY(pid) REFERENCES people_info(id)," \
+            f"movieId MEDIUMINT, FOREIGN KEY(movieId) REFERENCES movies(id), Job_id BIT(1), " \
+            f"FOREIGN KEY(Job_id) REFERENCES job_type(id));"
     try:
         cursor.execute(query)
         db.commit()
@@ -119,12 +121,12 @@ def pid_table(db, movies, table_title="people_movies"):
             if m not in movies_rows.keys():
                 continue
             movie_id = movies_rows[m]
-            list_commit.append((person_id, movie_id))
+            list_commit.append((person_id, movie_id, id_val))
     # insert values
     n = len(list_commit) // 5
     batches = [list_commit[i * n:(i + 1) * n] for i in range((len(list_commit) + n - 1) // n)]
     for batch in batches:
-        query = f"INSERT INTO {table_title} (pid, movieId) VALUES (%s, %s);"
+        query = f"INSERT INTO {table_title} (pid, movieId, Job_id) VALUES (%s, %s, %s);"
         cursor.executemany(query, batch)
         db.commit()
 
@@ -228,8 +230,8 @@ def load(db, path):
     genres_table(db, genres)
     movies_table(db, movies_genres)
     movies_genres_table(db, movies_genres)
-    pid_table(db, actors_movies)
-    pid_table(db, directors_movies)
+    pid_table(db, actors_movies, 0)
+    pid_table(db, directors_movies, 1)
 
 
 # def main():
@@ -245,5 +247,5 @@ def load(db, path):
 #     pid_table(actors_movies)
 #     pid_table(directors_movies)
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

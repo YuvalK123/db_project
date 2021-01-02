@@ -37,7 +37,7 @@ def load(db, path):
     cursor = db.cursor()
     cursor.execute("SET GLOBAL local_infile=1;")
     # locations table
-    cursor.execute("CREATE TABLE locations (id int PRIMARY KEY NOT NULL AUTO_INCREMENT, Location VARCHAR(70));")
+    cursor.execute("CREATE TABLE locations (id SMALLINT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT, Location VARCHAR(70));")
     query = f"LOAD DATA INFILE '{path}/locations.csv' INTO TABLE locations " \
             "FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\r\n'; "
     cursor.execute(query)
@@ -47,10 +47,11 @@ def load(db, path):
             "FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\r\n'; "
     cursor.execute(query)
     # people_info table
-    cursor.execute("CREATE TABLE people_info (id int PRIMARY KEY NOT NULL AUTO_INCREMENT, Name VARCHAR(70), "
-                   "Gender CHAR(1), BornIn int ,FOREIGN KEY(BornIn) REFERENCES locations(id), DiedIn int ,"
-                   "FOREIGN KEY(DiedIn) REFERENCES locations(id), Job_id BIT(1), FOREIGN KEY(Job_id) REFERENCES "
-                   "job_type(id));")
+    cursor.execute("CREATE TABLE people_info (id MEDIUMINT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT, "
+                   "Name VARCHAR(70), Gender CHAR(1), BornIn SMALLINT UNSIGNED ,"
+                   "FOREIGN KEY(BornIn) REFERENCES locations(id), DiedIn SMALLINT UNSIGNED , "
+                   "FOREIGN KEY(DiedIn) REFERENCES locations(id), Job_id BIT(1), FOREIGN KEY(Job_id) REFERENCES job_type(id));")
+    ""
     query = f"LOAD DATA INFILE '{path}/people_info.csv' INTO TABLE " \
             "people_info FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\r\n'; "
     cursor.execute(query)

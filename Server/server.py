@@ -7,6 +7,82 @@ def DatabaseError(error=None):
     return 'Database connection failed', 500
 
 
+@app.route('/admin/best_score')
+def get_best_score():
+    try:
+        cursor = db.cursor()
+        best_score_query = "SELECT username, score, datetime FROM users, (SELECT uid, MAX(score) AS " \
+                           "score, datetime FROM score_history) AS best_score WHERE users.id = " \
+                           "best_score.uid;"
+        cursor.execute(best_score_query)
+        result = cursor.fetchall()
+        if len(result) == 1:
+            message = f"{result[0][0]} has the highest score which is {result[0][1]} since {result[0][2]}."
+            return message
+        else:
+            return "0 games were ended"
+    except Exception as e:
+        print(e)
+        return DatabaseError(e)
+
+
+@app.route('/admin/quantity_of_gamers')
+def get_number_of_gamers():
+    try:
+        cursor = db.cursor()
+        num_gamers_query = "SELECT COUNT(*) FROM ((SELECT uid FROM games) UNION (SELECT uid FROM " \
+                           "score_history)) AS all_gamers;"
+        cursor.execute(num_gamers_query)
+        result = cursor.fetchone()
+        message = f"Number of people playing by far: {result[0][0]}"
+        return message
+    except Exception as e:
+        print(e)
+        return DatabaseError(e)
+
+
+@app.route('/admin/age_statistics')
+def get_age_statistics():
+    try:
+        query_avg_score_according_to_ages = "SELECT AVG(score) FROM score_history, users WHERE users.id = " \
+                                            "score_history.uid AND users.age BETWEEN %s AND %s;"
+        cursor = db.cursor()
+        cursor.execute(query_avg_score_according_to_ages, (0, 25))
+        avg_score_young = cursor.fetchall()[0][0]
+        cursor.execute(query_avg_score_according_to_ages, (26, 55))
+        avg_score_adults = cursor.fetchall()[0][0]
+        cursor.execute(query_avg_score_according_to_ages, (56, 99))
+        avg_score_elders = cursor.fetchall()[0][0]
+        avg_score_young = 0 if avg_score_young is None else avg_score_young
+        avg_score_adults = 0 if avg_score_adults is None else avg_score_adults
+        avg_score_elders = 0 if avg_score_elders is None else avg_score_elders
+        message = f"Average score for ages 0-25: {avg_score_young}\nAverage score for ages 26-55: " \
+                  f"{avg_score_adults}\n Average score for ages 56-99: {avg_score_elders}"
+        return message
+    except Exception as e:
+        print(e)
+        return DatabaseError(e)
+
+
+@app.route('/admin/gender')
+def get_gender_statistics():
+    try:
+        query_gender_score_sum = "SELECT SUM(score) FROM users, score_history WHERE users.id = score_history.uid AND " \
+                                 "users.gender = %s;"
+        cursor = db.cursor()
+        cursor.execute(query_gender_score_sum, ('m', ))
+        male_sum = cursor.fetchall()[0][0]
+        male_sum = 0 if male_sum is None else male_sum
+        cursor.execute(query_gender_score_sum, ('f', ))
+        female_sum = cursor.fetchall()[0][0]
+        female_sum = 0 if female_sum is None else female_sum
+        message = f"Cumulative score for males: {male_sum}\nCumulative score for females: {female_sum}"
+        return message
+    except Exception as e:
+        print(e)
+        return DatabaseError(e)
+
+
 def get_from_option(option, country):
     # query = f"SELECT Name, DiedIn FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country} ')"
     if option == 1:
@@ -62,13 +138,36 @@ def get_random_country():
         return DatabaseError(e)
 
 
+app.route('/movies')
+def get_person_movies():
+    person = request.args.get('person')
+    ret = {"gender": "", "actedIn": [], "directed": []}
+    if not person:
+        return json.dumps(None)
+    try:
+        cursor = db.cursor()
+        query = f"SELECT id, gender, Job_id FROM people_info WHERE Name={person} LIMIT 1"
+        cursor.execute(query)
+        record = cursor.fetchall()
+        if not record:
+            return json.dumps(None)
+
+
+
+    except Exception as e:
+        print(e)
+        return DatabaseError(e)
+    return json.dumps(ret)
+
+
 @app.route('/get_people')
 def get_all_related():
     country = request.args.get('country')
+    country = country_to_id(country)
     # born_query = f"SELECT Name FROM people_info WHERE BornIn=(SELECT id FROM locations WHERE location='{country} ');"
-    born_query = f"SELECT Name FROM people_info WHERE BornIn='{country} ';"
+    born_query = f"SELECT DISTINCT Name FROM people_info WHERE BornIn='{country} ';"
     # died_query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country} ');"
-    died_query = f"SELECT Name FROM people_info WHERE DiedIn='{country} ';"
+    died_query = f"SELECT DISTINCT Name FROM people_info WHERE DiedIn='{country} ';"
     try:
         cursor = db.cursor()
         cursor.execute(born_query)
@@ -88,17 +187,40 @@ def get_all_related():
 
 @app.route('/users', methods=['GET', 'POST'], )
 def users():
+    username, psw = request.args.get('user'), request.args.get('pass')
+    uid, is_admin = -1, False
     if request.method == 'POST':
-        # add user
-        pass
+        gender, age = request.args.get('gender'), request.args.get('age')
+        if not gender:
+            gender = ''
+        if not age:
+            age = -1
+        query = f"INSERT INTO users (username, password, age, gender) VALUES " \
+                     f"('{username}', '{psw}', {age}, '{gender}');"
+        cursor = db.cursor()
+        cursor.execute(query)
+        db.commit()
+        query = f"SELECT id FROM users WHERE (username='{username}' AND password='{psw}') LIMIT 1;"
+        cursor.execute(query)
+        record = cursor.fetchone()
+        if record:
+            uid = record[0]
     else:
         try:
-            arg1 = request.args.get('user')
-            print(arg1)
+            cursor = db.cursor()
+            query = f"SELECT id FROM users WHERE (username='{username}' AND password='{psw}') LIMIT 1;"
+            cursor.execute(query)
+            record = cursor.fetchone()
+            if record:
+                uid = record[0]
+                query = f"SELECT uid from admins WHERE uid={uid} LIMIT 1;"
+                cursor.execute(query)
+                r = cursor.fetchone()
+                if r:
+                    is_admin = True
         except Exception as e:
             print("e", e)
-    print('a')
-    return redirect('/')
+    return json.dumps({"uid": uid, "admin": is_admin})
 
 
 @app.route('/getgame', methods=['GET'])
@@ -193,7 +315,8 @@ def save_game():
     curr_location, countries, letters, strikes, score, user = args(curr_location), args(countries), args(letters), \
                                                         args(strikes), args(score), args(user)
     print(curr_location, countries, letters, strikes, score, user)
-    curr_location = country_to_id(curr_location)
+    if str(curr_location) != "-1":
+        curr_location = country_to_id(curr_location)
     print("curr location", curr_location)
     get_query = f"SELECT id FROM games WHERE uid={user};"
     cursor.execute(get_query)
