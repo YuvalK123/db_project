@@ -84,7 +84,18 @@ def get_gender_statistics():
 
 
 def get_from_option(option, country):
-    # query = f"SELECT Name, DiedIn FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country} ')"
+    # query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country} ')"
+    if option == 1:
+        query = f"SELECT Name FROM people_info WHERE DiedIn='{country}' ORDER BY RAND() LIMIT 1;"
+        keyword = "has died"
+    else:
+        query = f"SELECT Name FROM people_info WHERE BornIn='{country}' ORDER BY RAND() LIMIT 1;"
+        keyword = "was born"
+    return query, keyword
+
+
+
+def get_from_option(option, country):
     if option == 1:
         query = f"SELECT Name, DiedIn FROM people_info WHERE DiedIn='{country} ' ORDER BY RAND() LIMIT 1;"
         keyword = "has died"
@@ -100,20 +111,25 @@ def get_hint():
     try:
         cursor = db.cursor()
         option, country = random.randint(1, 2), request.args.get('country')
+        country = country_to_id(country)
         query, keyword = get_from_option(option, country)
         cursor.execute(query)
         result = cursor.fetchall()
         if len(result) > 0:
-            record = result[0]
-            result = f"{record[0]} {keyword} there"
+            record = result[0][0]
+            result = f"{record} {keyword} there"
         else:
             query, keyword = get_from_option((option % 2) + 1, country)
             cursor.execute(query)
             result = cursor.fetchone()
             print("result", result)
-            if len(result) > 0:
+            if result is None:
+                result = "No Available Hint"
+            elif len(result) > 0:
                 record = result[0]
-                result = f"{record[0]} was {keyword} there"
+                result = f"{record} was {keyword} there"
+            else:
+                result = "No Available Hint"
         return result
     except Exception as e:
         print(e)
@@ -199,24 +215,22 @@ def get_person_movies():
 @app.route('/get_people')
 def get_all_related():
     country = request.args.get('country')
-    born_query = f"SELECT Name FROM people_info WHERE BornIn=(SELECT id FROM locations WHERE location='{country}');"
-    died_query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country}');"
-    print(born_query)
-    print(died_query)
+    country = country_to_id(country)
+    # born_query = f"SELECT Name FROM people_info WHERE BornIn=(SELECT id FROM locations WHERE location='{country} ');"
+    born_query = f"SELECT DISTINCT Name FROM people_info WHERE BornIn='{country} ';"
+    # died_query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country} ');"
+    died_query = f"SELECT DISTINCT Name FROM people_info WHERE DiedIn='{country} ';"
     try:
         cursor = db.cursor()
         cursor.execute(born_query)
         born_country = cursor.fetchall()
-        print(born_country)
         born_country = [x[0] for x in born_country]
         cursor.execute(died_query)
         died_country = cursor.fetchall()
-        print(died_country)
         died_country = [x[0] for x in died_country]
         b = ",".join(born_country)
         d = ",".join(died_country)
         ret = {"born": b, "died": d}
-        print(ret)
         return json.dumps(ret)
     except Exception as e:
         print(e)
@@ -338,7 +352,7 @@ def country_to_id(country=None):
         cursor = db.cursor()
         cursor.execute(query)
         record = cursor.fetchone()
-        return str(record[0])
+        return record[0]
     except Exception as e:
         print(e)
         return None
@@ -346,12 +360,11 @@ def country_to_id(country=None):
 
 @app.route('/savegame', methods=['POST'])
 def save_game():
-    parameters, args, cursor = GAME_PARAMETERS, request.args.get, db.cursor()
-    curr_location, countries, letters, strikes, score, user = parameters["curr_country"], parameters["countries"], \
-                                                        parameters["letters"], parameters["strikes"], \
-                                                        parameters["score"], parameters["user"]
-    curr_location, countries, letters, strikes, score, user = args(curr_location), args(countries), args(letters), \
-                                                        args(strikes), args(score), args(user)
+    parameters,  cursor = GAME_PARAMETERS, db.cursor()
+    args = request.form
+
+    curr_location, countries, letters, strikes, score, user = parameters["curr_country"], parameters["countries"], parameters["letters"], parameters["strikes"], parameters["score"], parameters["user"]
+    curr_location, countries, letters, strikes, score, user = args[curr_location], args[countries], args[letters], args[strikes], args[score], args[user]
     print(curr_location, countries, letters, strikes, score, user)
     if str(curr_location) != "-1":
         curr_location = country_to_id(curr_location)
@@ -364,7 +377,7 @@ def save_game():
     if game_record:
         game_exists = True
         game_id = game_record[0]
-    if game_exists:
+    if not game_exists:
         game_query = f"INSERT INTO games (uid, current_score, strikes, current_location) VALUES " \
                 f"({user}, {score}, {strikes}, {curr_location});"
     else:
