@@ -215,22 +215,24 @@ def get_person_movies():
 @app.route('/get_people')
 def get_all_related():
     country = request.args.get('country')
-    country = country_to_id(country)
-    # born_query = f"SELECT Name FROM people_info WHERE BornIn=(SELECT id FROM locations WHERE location='{country} ');"
-    born_query = f"SELECT DISTINCT Name FROM people_info WHERE BornIn='{country} ';"
-    # died_query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country} ');"
-    died_query = f"SELECT DISTINCT Name FROM people_info WHERE DiedIn='{country} ';"
+    born_query = f"SELECT Name FROM people_info WHERE BornIn=(SELECT id FROM locations WHERE location='{country}');"
+    died_query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country}');"
+    print(born_query)
+    print(died_query)
     try:
         cursor = db.cursor()
         cursor.execute(born_query)
         born_country = cursor.fetchall()
+        print(born_country)
         born_country = [x[0] for x in born_country]
         cursor.execute(died_query)
         died_country = cursor.fetchall()
+        print(died_country)
         died_country = [x[0] for x in died_country]
         b = ",".join(born_country)
         d = ",".join(died_country)
         ret = {"born": b, "died": d}
+        print(ret)
         return json.dumps(ret)
     except Exception as e:
         print(e)
