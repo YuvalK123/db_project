@@ -4,7 +4,7 @@ $(document).ready(()=>{
     var oldGame;
     var uid = $.urlParam("uid")
      if(uid == null){
-         window.location = "/"
+         window.location = "./"
      }
     var admin = $.urlParam("admin")
     var user = $.urlParam("user")
@@ -29,22 +29,22 @@ $(document).ready(()=>{
     });
 
     $("#newbtn").click(()=>{
-        window.location = "/Game.html?uid="+uid+"&user="+user
+        window.location = "./Game.html?uid="+uid+"&user="+user
     });
 
     
     $("#resbtn").click(()=>{
-        window.location = "/Game.html?uid="+uid+"&user="+user+"&old=1"
+        window.location = "./Game.html?uid="+uid+"&user="+user+"&old=1"
     });
-
-
 
 
     $("#logoutbtn").click(()=>{
-        window.location = "/"
+        window.location = "./"
     });
 
-
+    $("#scoresbtn").click(()=>{
+        window.location = "./ScoresTable.html"
+    });
 
 });
 

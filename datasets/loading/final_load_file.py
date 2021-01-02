@@ -11,9 +11,9 @@ def main():
     )
 
     cursor = db.cursor()
-
-    # create a cities table (it will help us but won't remain)
-    # create table of countries. it is important that the file of the data will be places in the location specified.
+    # cursor.execute('DROP TABLE countries')
+    # # create a cities table (it will help us but won't remain)
+    # # create table of countries. it is important that the file of the data will be places in the location specified.
     # cursor.execute("CREATE TABLE countries (Country CHAR(2), "
     #                "City VARCHAR(100), AccentCity VARCHAR(100) NULL, Region VARCHAR(4), Population INT NULL, "
     #                "Latitude FLOAT(9,6), Longitude FLOAT(9,6));")
@@ -73,10 +73,13 @@ def main():
     #     if born_in.find(',') > 0:
     #         sep_string = born_in.split(',')
     #         for x in sep_string:
-    #             if x.strip().lower() in cities:
-    #                 born_in = x.strip()
+    #             x = x.lower().replace('city', '').strip()
+    #             if x in cities:
+    #                 born_in = x
     #                 break
-    #     elif born_in.lower() not in cities and born_in != '':
+    #         if born_in.find(',') > 0:
+    #             born_in = ''
+    #     elif not born_in.isascii() or (born_in.lower().replace('city', '').strip() not in cities and born_in != ''):
     #         born_in = ''
     #
     #     if loc != born_in and loc != '':
@@ -89,48 +92,48 @@ def main():
     #     if died_in.find(',') > 0:
     #         sep_string = died_in.split(',')
     #         for x in sep_string:
-    #             if x.strip().lower() in cities:
-    #                 died_in = x.strip()
+    #             x = x.lower().replace('city', '').strip()
+    #             if x in cities:
+    #                 died_in = x
     #                 break
-    #     elif died_in.lower() not in cities and died_in != '':
+    #         if died_in.find(',') > 0:
+    #             died_in = ''
+    #     elif not died_in.isascii() or (died_in.lower().replace('city', '').strip() not in cities and died_in != ''):
     #         died_in = ''
     #
     #     if loc != died_in and loc != '':
     #         val = (died_in, loc)
     #         cursor.execute(sql_died, val)
     #
-    # cursor.execute('DROP TABLE cities')
     # db.commit()
 
     # creates locations table
     # cursor.execute('DROP TABLE locations_temp')
-    # cursor.execute("CREATE TABLE locations_temp (id int PRIMARY KEY NOT NULL AUTO_INCREMENT, Location VARCHAR(70));")
+    # cursor.execute('DROP TABLE locations')
+    # cursor.execute("CREATE TABLE locations_temp (Location VARCHAR(70));")
     # cursor.execute("INSERT INTO locations_temp (Location) SELECT BornIn FROM people_info_temp;")
     # cursor.execute("INSERT INTO locations_temp (Location) SELECT DiedIn FROM people_info_temp;")
     # cursor.execute("INSERT INTO locations_temp (Location) SELECT city_id FROM res_temp;")
-    # cursor.execute("CREATE TABLE locations (id int PRIMARY KEY NOT NULL AUTO_INCREMENT, Location VARCHAR(70));")
-    # cursor.execute("INSERT INTO locations (Location) SELECT DISTINCT location FROM locations_temp;")
+    # cursor.execute("CREATE TABLE locations (id SMALLINT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT, Location VARCHAR("
+    #                "70));")
+    # cursor.execute("INSERT INTO locations (Location) SELECT DISTINCT Location FROM locations_temp;")
     # cursor.execute('DROP TABLE locations_temp')
     # # remove white spaces in location column in locations table
     # cursor.execute("UPDATE locations SET location = TRIM(location);")
     # db.commit()
-
-    # # create people_info final table
-    # cursor.execute("CREATE TABLE people_info (id int PRIMARY KEY NOT NULL AUTO_INCREMENT, Name VARCHAR(70), "
-    #                "Gender CHAR(1), BornIn int ,FOREIGN KEY(BornIn) REFERENCES locations(id), DiedIn int ,"
-    #                "FOREIGN KEY(DiedIn) REFERENCES locations(id), Job_id BIT(1), FOREIGN KEY(Job_id) REFERENCES "
-    #                "job_type(id));")
-
+    # create people_info final table
+    # cursor.execute("CREATE TABLE people_info (id MEDIUMINT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT, "
+    #                "Name VARCHAR(70), Gender CHAR(1), BornIn SMALLINT UNSIGNED ,FOREIGN KEY(BornIn) REFERENCES "
+    #                "locations(id), DiedIn SMALLINT UNSIGNED, "
+    #                "FOREIGN KEY(DiedIn) REFERENCES locations(id));")
+    #
     # cursor.execute("SELECT * FROM locations;")
     # loc_result = cursor.fetchall()
     # id_list = [x[0] for x in loc_result]
     # loc_list = [x[1].lower() for x in loc_result]
-    #
     # cursor.execute("SELECT * FROM people_info_temp;")
     # people_result = cursor.fetchall()
-    # cursor.execute("DROP TABLE people_info_temp")
-    #
-    # query_people = "INSERT INTO people_info (Name, Gender, BornIn, DiedIn, Job_id) VALUES (%s, %s, %s, %s, %s)"
+    # query_people = "INSERT INTO people_info (Name, Gender, BornIn, DiedIn) VALUES (%s, %s, %s, %s)"
     # for row in people_result:
     #     print(row[3], row[4])
     #     born_in = row[3].strip().lower()
@@ -145,14 +148,8 @@ def main():
     #
     #     if not (row[3] == '' and row[4] == ''):
     #         values = (
-    #             row[1].strip(), gender, id_list[loc_list.index(born_in)], id_list[loc_list.index(died_in)],
-    #             row[5])
+    #             row[1].strip(), gender, id_list[loc_list.index(born_in)], id_list[loc_list.index(died_in)])
     #         cursor.execute(query_people, values)
-    # db.commit()
-
-    # change the data type for id (after realizing the number of rows is not big.
-    # cursor.execute("ALTER TABLE people_info DROP COLUMN id;")
-    # cursor.execute("ALTER TABLE people_info ADD id SMALLINT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT FIRST;")
     # db.commit()
 
     # creating csv files from the tables created to fast load

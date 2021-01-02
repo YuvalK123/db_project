@@ -26,7 +26,7 @@ $(document).ready(()=>{
 
     uid = $.urlParam("uid")
      if(uid == null){
-         window.location = "/"
+         window.location = "./"
      }
     user = $.urlParam("user")
     old = $.urlParam("old")
@@ -374,7 +374,7 @@ $(document).ready(()=>{
   });
 
   $("#next").click(()=>{
-      window.location = "/Game.html?uid="+uid+"&user="+user+"&old=1"
+      window.location = "./Game.html?uid="+uid+"&user="+user+"&old=1"
   });
 
   $("#hint").click(()=>{

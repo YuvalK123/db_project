@@ -36,20 +36,20 @@ $(document).ready(()=>{
                     $("#loginErr").show();
                 }
                 else{
-                    var query= "/MainMenu.html?uid="+data.uid+"&user="+user;
+                    var query= "./MainMenu.html?uid="+data.uid+"&user="+user;
                     if(data.admin == true){
-                        query+="&admin=true"
+                        query+="&admin=1"
                     }
                     window.location = query
                 }
             }
             else{
-                $("#loginErr").html("Problem connceting to the serv, please try again...");
+                $("#loginErr").html("Problem connecting to the serv, please try again...");
                 $("#loginErr").show();
             }
         },
         error: function(XMLHttpRequest, textStatus, errorThrown) {
-            $("#loginErr").html("Problem connceting to the server, please try again...");
+            $("#loginErr").html("Problem connecting to the server, please try again...");
             $("#loginErr").show();
         }  
     });
