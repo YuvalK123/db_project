@@ -186,21 +186,6 @@ def get_person_movies():
         # print(actor_movies, director_movies)
         if len(actor_movies) > 0:
             ret["actedIn"] = movies_record_to_list(cursor, actor_movies)
-        #     actor_movies = ",".join(director_movies)
-        #     acted_query = f"SELECT DISTINCT movies.movieName, genres.genre FROM movies, movies_genres, genres " \
-        #                   f"WHERE movies.id = movies_genres.movieId AND movies_genres.genreId = genres.id and " \
-        #                   f"movies.id IN ({actor_movies}) ORDER BY movies.id;"
-        #     cursor.execute(acted_query)
-        #     a_record = cursor.fetchall()
-        #     # print(record)
-        # yoyo = {}
-        # if a_record:
-        #     for r in a_record:
-        #         if r[0] in yoyo.keys():
-        #             yoyo[r[0]].append(r[1])
-        #         else:
-        #             yoyo[r[0]] = []
-        # # print(yoyo)
         if len(director_movies) > 0:
             ret["directed"] = movies_record_to_list(cursor, director_movies)
         print(ret)
