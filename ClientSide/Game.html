@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"crossorigin="anonymous"></script>
+<script src="game.js"></script>
+<style>
+    .colored{
+        background-color: blueviolet;
+        outline: 5px auto -webkit-focus-ring-color;
+    }
+    .coloredBlue{
+        background-color: cyan;
+        outline: 5px auto -webkit-focus-ring-color;
+    }
+
+    .good{
+        background-color: green;
+        border: 2px solid #000 !important;
+    }
+
+    .goodLetter{
+        background-color: rgb(230, 226, 13);
+        border: 2px solid #000 !important;
+    }
+</style>
+</head>
+<body>
+    <div id="playScreen" style="padding: 50px;background-color:brown;color:white;">
+        <div class="row" >
+            <div class="col-md-0" style="font-size: 20px;"></div>
+            <div class="col-md-12"><p id="points"
+                    style="color:white;font-size:20px;margin:auto;float:left"
+                    ></p></div>
+            <div class="col-md-0"></div>
+        </div>
+    <div class="row">
+        <div class="col-md-3"></div>
+        <div class="col-md-6" id="game">
+            <div class="row">
+                <div class="col-md-12" style="font-size:
+                    26px;font-weight:bold"><span id="welcome"></span></div><br><br>
+                <br><Br>
+            </div>
+            <div class="row">
+                <div class="col-md-12" style="font-size: 20px;"><p>Guess
+                        The city name! <br> You Have <span id="Mis"></span>
+                        mistakes left <span id="instr"></span></p></div>
+            </div>
+            <br><br>
+            <div class="row">
+                <div class="col-md-3" style="font-size: 20px;"><p>Guess:</p></div>
+                <div class="col-md-9" style="width: 100%;">
+                    <div id="word"></div> <br><br>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3" style="font-size: 20px;"><p>Letters:</p></div>
+                <div class="col-md-9" style="width: 100%;">
+                    <div id="lettersOption"></div> <br><br>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3" style="font-size: 20px;"></div>
+                <div class="col-md-6"><button id="hint"
+                        style="color:black;margin:auto;width:120px"
+                        class="btn float-center">Hint!</button></div>
+                <div class="col-md-3"></div>
+            </div>
+
+        </div>
+        <div class="col-md-6" id="again" style="display:none;">
+            <div class="row">
+                <div class="col-md-3" style="font-size: 20px;"></div>
+                <div class="col-md-6"><button id="playAgain"
+                        style="color:black;margin:auto;width:120px"
+                        class="btn float-center">Play Again</button></div>
+                <div class="col-md-3"></div>
+            </div>
+        </div>
+        <div class="col-md-3"></div>
+    </div>
+    <div class="row" >
+        <div class="col-md-0" style="font-size: 20px;"></div>
+        <div class="col-md-12"><button id="save"
+                style="color:black;margin:auto;width:120px;float:right"
+                class="btn float-center">Save Game</button></div>
+        <div class="col-md-0"></div>
+    </div>
+</div>
+
+<div class="modal" id="dataModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 id="modTitle"></h1><br>
+                <h2 class="modal-title">The City Of <span id="city"></span></h5>
+            </div>
+            <div class="modal-body">
+                <span id="bornSpan">
+                <B style="font-size: 20px;"><p><ul>Persons who were born here:</ul></p></B>
+                <a id="showallborn" href="#" style="padding-left: 400px;font-weight:600;font-size:15px">show all</a>
+                <div style="margin-left: 50px;" id="borninfo"></div>
+                </span>
+                <span id="diedSpan">
+                <br>
+                <B style="font-size: 20px;"><p><ul>Persons who died here:</ul></p></B>
+                <a id="showalldied" href="#" style="padding-left: 400px;font-weight:600;font-size:15px">show all</a>
+                <div style="margin-left: 50px;" id="diedinfo"></div>
+                </span>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="next" class="btn btn-primary">Next Level</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
