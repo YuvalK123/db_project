@@ -125,6 +125,10 @@ def load(db, path):
     cursor.executemany(query, final_rests)
     db.commit()
 
+    query = "ALTER TABLE `globalinfoapp`.`restaurants` ADD COLUMN `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT FIRST,ADD PRIMARY KEY (`id`);"
+    cursor.execute(query)
+    db.commit()
+
 
 
 
