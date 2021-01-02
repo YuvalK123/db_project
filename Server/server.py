@@ -138,7 +138,27 @@ def get_random_country():
         return DatabaseError(e)
 
 
-app.route('/movies')
+def movies_record_to_list(cursor, movies_idx):
+    movies = ",".join(movies_idx)
+    acted_query = f"SELECT DISTINCT movies.movieName, genres.genre FROM movies, movies_genres, genres " \
+                  f"WHERE movies.id = movies_genres.movieId AND movies_genres.genreId = genres.id and " \
+                  f"movies.id IN ({movies}) ORDER BY movies.id;"
+    cursor.execute(acted_query)
+    record = cursor.fetchall()
+    # print(d_record)
+    if not record:
+        return []
+    dic = {}
+    for r in record:
+        if r[0] in dic.keys():
+            dic[r[0]].append(r[1])
+        else:
+            dic[r[0]] = [r[1]]
+    res = [{key: value} for key, value in dic.items()]
+    return res
+
+
+@app.route('/movies')
 def get_person_movies():
     person = request.args.get('person')
     ret = {"gender": "", "actedIn": [], "directed": []}
@@ -146,11 +166,45 @@ def get_person_movies():
         return json.dumps(None)
     try:
         cursor = db.cursor()
-        query = f"SELECT id, gender, Job_id FROM people_info WHERE Name={person} LIMIT 1"
+        query = f"SELECT id, gender FROM people_info WHERE Name='{person}' LIMIT 1"
         cursor.execute(query)
-        record = cursor.fetchall()
+        record = cursor.fetchone()
         if not record:
             return json.dumps(None)
+        pid, ret["gender"] = record
+        # get all movies
+        query = f"SELECT movieId, job_id FROM people_movies WHERE pid={pid}"
+        cursor.execute(query)
+        record = cursor.fetchall()  # ((301,0/1), (555,0/1),...)
+        if not record:
+            return json.dumps(None)
+        actor_id, directors_id = "00", "01"
+        # print(record)
+        actor_movies = tuple((x[0]) for x in record if actor_id in str(x[1]))
+        director_movies = tuple(str(x[0]) for x in record if directors_id in str(x[1]))
+        a_record, d_record = None, None
+        # print(actor_movies, director_movies)
+        if len(actor_movies) > 0:
+            ret["actedIn"] = movies_record_to_list(cursor, actor_movies)
+        #     actor_movies = ",".join(director_movies)
+        #     acted_query = f"SELECT DISTINCT movies.movieName, genres.genre FROM movies, movies_genres, genres " \
+        #                   f"WHERE movies.id = movies_genres.movieId AND movies_genres.genreId = genres.id and " \
+        #                   f"movies.id IN ({actor_movies}) ORDER BY movies.id;"
+        #     cursor.execute(acted_query)
+        #     a_record = cursor.fetchall()
+        #     # print(record)
+        # yoyo = {}
+        # if a_record:
+        #     for r in a_record:
+        #         if r[0] in yoyo.keys():
+        #             yoyo[r[0]].append(r[1])
+        #         else:
+        #             yoyo[r[0]] = []
+        # # print(yoyo)
+        if len(director_movies) > 0:
+            ret["directed"] = movies_record_to_list(cursor, director_movies)
+        print(ret)
+
 
 
 
