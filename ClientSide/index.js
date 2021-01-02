@@ -53,9 +53,11 @@ $(document).ready(()=>{
             $("#loginErr").show();
         }  
     });
-
 });
 
+$("#register").click(()=>{
+        window.location = "./register.html"
+});
 
 }); 
 
