@@ -1,11 +1,28 @@
 from settings import *
-from datetime import datetime
+import datetime
 import random
 
 
 def DatabaseError(error=None):
     return 'Database connection failed', 500
 
+
+def datetime_tostring(o):
+    if isinstance(o, datetime.datetime):
+        return o.__str__()
+
+
+@app.route('/bestScores')
+def get_best_scores():
+    try:
+        cursor = db.cursor()
+        query_best_10_scores = "SELECT * FROM score_history ORDER BY score DESC LIMIT 10;"
+        cursor.execute(query_best_10_scores)
+        result = cursor.fetchall()
+        return json.dumps(result, default=datetime_tostring)
+    except Exception as e:
+        print(e)
+        return DatabaseError(e)
 
 @app.route('/admin/best_score')
 def get_best_score():

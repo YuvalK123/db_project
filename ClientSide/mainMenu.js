@@ -43,7 +43,7 @@ $(document).ready(()=>{
     });
 
     $("#scoresbtn").click(()=>{
-        window.location = "./ScoresTable.html"
+        window.location = "./ScoresTable.html?uid="+uid+"&user="+user+"&admin="+admin
     });
 
 });
