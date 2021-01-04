@@ -95,7 +95,8 @@ def get_hint():
     options = ["bornin, diedin, restaurant"]
     try:
         cursor = db.cursor()
-        option, country = random.randint(1, 2), request.args.get('country')
+        option = random.randint(1, 2)
+        country = request.args.get('country')
         country = country_to_id(country)
         query, keyword = get_from_option(option, country)
         cursor.execute(query)
@@ -302,8 +303,13 @@ def save_game():
     parameters,  cursor = GAME_PARAMETERS, db.cursor()
     args = request.form
 
-    curr_location, countries, letters, strikes, score, user = parameters["curr_country"], parameters["countries"], parameters["letters"], parameters["strikes"], parameters["score"], parameters["user"]
-    curr_location, countries, letters, strikes, score, user = args[curr_location], args[countries], args[letters], args[strikes], args[score], args[user]
+    curr_location, countries, letters, strikes, score, user = \
+        parameters["curr_country"], parameters["countries"], parameters["letters"], \
+        parameters["strikes"], parameters["score"], parameters["user"]
+
+    curr_location, countries, letters, strikes, score, user = \
+        args[curr_location], args[countries], args[letters], args[strikes], args[score], args[user]
+
     print(curr_location, countries, letters, strikes, score, user)
     if str(curr_location) != "-1":
         curr_location = country_to_id(curr_location)
@@ -352,6 +358,36 @@ def save_game():
         print(e)
         return DatabaseError(e)
     return str(game_id)
+
+
+@app.route('/update_user', methods=['POST'])
+def update_user():
+    """
+    requires uid, and username to change username, pass to change password
+    """
+    username, psw, uid = request.args.get("username"), request.args.get("pass"), request.args.get("uid")
+    ret_val = -1
+    if username and psw:  # update username and password
+        query = f"UPDATE users SET username = '{username}', password = '{psw}' WHERE id={uid};"
+    elif username:  # update username
+        query = f"UPDATE users SET username = '{username}' WHERE id={uid};"
+    elif psw:
+        query = f"UPDATE users SET password = '{psw}' WHERE id={uid};"
+    else:
+        return str(ret_val)
+    try:
+        cursor = db.cursor()
+        ret_val = cursor.execute(query)
+        db.commit()
+    except Exception as e:
+        print(e)
+        pass
+    return str(ret_val)
+
+
+@app.route('/')
+def index():
+    return "Welcome to the server"
 
 
 app.run(debug=True, port=PORT)
