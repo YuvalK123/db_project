@@ -338,7 +338,7 @@ function dataModelParser(data) {
     if (info.born.length > 0) {
         $("#bornSpan").show();
         for (var k = 0; k < Math.min(born.length, 5); k++) {
-            $("#borninfo").append("<span>" + born[k] + "</span><br>");
+            $("#borninfo").append("<a target='_blank' href='/MoviesByPerson.html?person="+born[k]+"'>" + born[k] + "</a><br>");
             $("#bornSpan").show();
         }
     }
@@ -351,7 +351,7 @@ function dataModelParser(data) {
     died = info.died.split(",");
     if (info.died.length > 0) {
         for (var k = 0; k < Math.min(died.length, 5); k++) {
-            $("#diedinfo").append("<span>" + died[k] + "</span><br>");  
+            $("#diedinfo").append("<a target='_blank' href='/MoviesByPerson.html?person="+died[k]+"'>" + died[k] + "</a><br>");  
         }
     }
     else {
