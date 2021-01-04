@@ -185,33 +185,46 @@ def get_person_movies():
     return json.dumps(ret)
     pass
 
-
 @app.route('/get_people')
 def get_all_related():
     country = request.args.get('country')
     born_query = f"SELECT Name FROM people_info WHERE BornIn=(SELECT id FROM locations WHERE location='{country}');"
     died_query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country}');"
-    print(born_query)
-    print(died_query)
+    rests_query = f"SELECT DISTINCT name,latitude,longitude FROM restaurants WHERE city_id=" \
+                  f"(SELECT id FROM locations WHERE location='{country}');"
+    rests_count_query = f"SELECT COUNT(name) FROM restaurants WHERE city_id=" \
+                        f"(SELECT id FROM locations WHERE location='{country}');"
+    # print(born_query)
+    # print(died_query)
+    # print(rests_query)
+    # print(rests_count_query)
     try:
         cursor = db.cursor()
         cursor.execute(born_query)
         born_country = cursor.fetchall()
-        print(born_country)
         born_country = [x[0] for x in born_country]
         cursor.execute(died_query)
         died_country = cursor.fetchall()
-        print(died_country)
         died_country = [x[0] for x in died_country]
+
+        cursor.execute(rests_query)
+        rests_country = cursor.fetchall()
+        rests_country = [":".join(x) for x in rests_country]
+
+
+        cursor.execute(rests_count_query)
+        rests_count = cursor.fetchall()
+        print(rests_count)
+        rests_count = [x[0] for x in rests_count]
+
         b = ",".join(born_country)
         d = ",".join(died_country)
-        ret = {"born": b, "died": d}
-        print(ret)
+        r = ",".join(rests_country)
+        ret = {"born": b, "died": d, "rests": r, "restsCount": rests_count}
         return json.dumps(ret)
     except Exception as e:
         print(e)
         return DatabaseError(e)
-
 
 @app.route('/users', methods=['GET', 'POST'], )
 def users():
@@ -222,7 +235,7 @@ def users():
         if not gender:
             gender = ''
         if not age:
-            age = -1
+            age = "1970-01-01"
         query = f"INSERT INTO users (username, password, age, gender) VALUES " \
                      f"('{username}', '{psw}', '{age}', '{gender}');"
         cursor = db.cursor()
@@ -286,24 +299,42 @@ def get_game():
         return DatabaseError(e)
     return json.dumps(ret_value)
 
+
 @app.route('/gameover')
 def delete_game():
-    game_id = GAME_PARAMETERS["game"]
+    game_id = request.args.get(GAME_PARAMETERS["game"])
     try:
         cursor = db.cursor()
         letters_query = f"DELETE FROM game_letter WHERE gid={game_id}"
         cursor.execute(letters_query)
         locations_query = f"DELETE FROM game_locations WHERE gid={game_id}"
-        cursor.execute(letters_query)
+        cursor.execute(locations_query)
         db.commit()
-        game_query = f"DELETE FROM games WHERE gid={game_id}"
-        cursor.execute(letters_query)
+        game_query = f"DELETE FROM games WHERE id={game_id}"
+        cursor.execute(game_query)
         db.commit()
         return "200"
     except Exception as e:
         print(e)
         return DatabaseError(e)
 
+
+@app.route('/user_country')
+def users_countries():
+    uid = request.args.get('uid')
+    query = f"SELECT location FROM user_locations WHERE uid={uid};"
+    try:
+        cursor = db.cursor()
+        rows = cursor.execute(query)
+        if rows <= 0:
+            return ""
+        records = cursor.fetchall()
+        places = [id_to_country(x[0]) for x in records if x[0] > 0]
+        return ",".join(places)
+    except Exception as e:
+        print(e)
+        pass
+    return "None"
 
 
 @app.route('/savegame', methods=['POST'])
@@ -319,8 +350,10 @@ def save_game():
         args[curr_location], args[countries], args[letters], args[strikes], args[score], args[user], args[hints]
 
     print(curr_location, countries, letters, strikes, score, user)
-    if str(curr_location) != "-1":
+    if str(curr_location) != "0":
         curr_location = country_to_id(curr_location)
+    else:
+        curr_location = "NULL"
     print("curr location", curr_location)
     get_query = f"SELECT id FROM games WHERE uid={user};"
     cursor.execute(get_query)
@@ -332,7 +365,7 @@ def save_game():
         game_id = game_record[0]
     if not game_exists:
         game_query = f"INSERT INTO games (uid, current_score, strikes, hints, current_location) VALUES " \
-                f"({user}, {score}, {strikes}, {curr_location});"
+                f"({user}, {score}, {strikes}, {hints}, {curr_location});"
     else:
         game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}, hints = {hints}" \
                 f"current_location = {curr_location} WHERE uid={user};"
@@ -404,8 +437,6 @@ def update_user():
         except Exception as e:
             print(e)
             return DatabaseError(e)
-
-
 
 
 @app.route('/')
