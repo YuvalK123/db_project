@@ -4,7 +4,7 @@ from fast_people_load import load as people_load
 from games_load import load as game_load
 from restaurants_load import load as res_loas
 from cinema_load import load as cinema_load
-PASSWORD = "1q2w3E4R"
+PASSWORD = "topaz083@gmail.comTT"
 DATABASE = "GlobalInfoApp"
 
 

@@ -50,8 +50,8 @@ def load(db, path):
     cursor.execute("CREATE TABLE people_info (id MEDIUMINT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT, "
                    "Name VARCHAR(70), Gender CHAR(1), BornIn SMALLINT UNSIGNED ,"
                    "FOREIGN KEY(BornIn) REFERENCES locations(id), DiedIn SMALLINT UNSIGNED , "
-                   "FOREIGN KEY(DiedIn) REFERENCES locations(id), Job_id BIT(1), FOREIGN KEY(Job_id) REFERENCES job_type(id));")
-    ""
+                   "FOREIGN KEY(DiedIn) REFERENCES locations(id));")
+
     query = f"LOAD DATA INFILE '{path}/people_info.csv' INTO TABLE " \
             "people_info FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\r\n'; "
     cursor.execute(query)
