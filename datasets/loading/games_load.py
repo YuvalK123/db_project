@@ -5,7 +5,8 @@ def create_game_table(db, cursor):
     # gid, uid, current_score, strikes
     query = "CREATE TABLE games (id MEDIUMINT PRIMARY KEY NOT NULL AUTO_INCREMENT, " \
             "uid MEDIUMINT, FOREIGN KEY(uid) REFERENCES users(id), current_score SMALLINT, " \
-            "strikes TINYINT, current_location MEDIUMINT);"
+            "strikes TINYINT, hints TINYINT, current_location SMALLINT UNSIGNED, FOREIGN KEY(current_location) " \
+            "REFERENCES locations(id));"
     db.commit()
     cursor.execute(query)
     query = f"CREATE TABLE score_history (uid MEDIUMINT PRIMARY KEY NOT NULL, FOREIGN KEY(uid) REFERENCES users(id), " \
@@ -24,7 +25,11 @@ def letter_table(db, cursor):
 def locations_table(db, cursor):
     # gid, location
     query = "CREATE TABLE game_locations (gid MEDIUMINT NOT NULL, FOREIGN KEY(gid) REFERENCES games(id), " \
-            "location MEDIUMINT); "
+            "location SMALLINT UNSIGNED, FOREIGN KEY(location) REFERENCES locations(id)); "
+    cursor.execute(query)
+    db.commit()
+    query = "CREATE TABLE user_locations (uid MEDIUMINT NOT NULL, FOREIGN KEY(uid) REFERENCES users(id), " \
+            "location SMALLINT UNSIGNED, FOREIGN KEY(location) REFERENCES locations(id)); "
     cursor.execute(query)
     db.commit()
 
@@ -32,7 +37,7 @@ def locations_table(db, cursor):
 def users(db, cursor):
     # uid, username, password, age, gender
     query = f"CREATE TABLE users (id MEDIUMINT PRIMARY KEY NOT NULL AUTO_INCREMENT, username VARCHAR(20)," \
-            f"password VARCHAR(25), age TINYINT, gender CHAR(1)); "
+            f"password VARCHAR(25), age DATE, gender CHAR(1)); "
     cursor.execute(query)
     db.commit()
     query = f"CREATE TABLE admins (uid MEDIUMINT PRIMARY KEY NOT NULL, FOREIGN KEY(uid) REFERENCES users(id)); "
@@ -41,17 +46,17 @@ def users(db, cursor):
 
 
 def make_users(db, cursor):
-    username, password, age, gender = "user", 12345, 26, "m"
+    username, password, age, gender = "user", 12345, "1994-03-09", "m"
     query = f"INSERT INTO users (username, password, age, gender) " \
-            f"VALUES('{username}', {password}, {age}, '{gender}')"
+            f"VALUES('{username}', {password}, '{age}', '{gender}')"
     cursor.execute(query)
-    username, password, age, gender = "user2", 123415, 17, "f"
+    username, password, age, gender = "user2", 123415, "1992-07-07", "f"
     query = f"INSERT INTO users (username, password, age, gender) " \
-            f"VALUES('{username}', {password}, {age}, '{gender}')"
+            f"VALUES('{username}', {password}, '{age}', '{gender}')"
     cursor.execute(query)
-    adminname, password, age, gender = "admin", 123456, 25, "f"
+    adminname, password, age, gender = "admin", 123456, "1998-01-31", "f"
     query = f"INSERT INTO users (username, password, age, gender) " \
-            f"VALUES('{adminname}', {password}, {age}, '{gender}')"
+            f"VALUES('{adminname}', {password}, '{age}', '{gender}')"
     cursor.execute(query)
     db.commit()
     query = f"SELECT id FROM users WHERE username='{adminname}'"
@@ -66,19 +71,23 @@ def make_users(db, cursor):
 
 
 def create_games(db, cursor):
-    # games =  gid, uid, current_score, strikes, current_location
+    # games =  gid, uid, current_score, strikes, current_location, hints
     # locations = gid, location
     # letters = gid, letter
-    games = [(1, 1, 122, 2, 2500), (5, 2, 7, 5, 500), (22, 3, 14, 1, 33)]
-    locations = [(5, 1400), (5, 1412), (22, 502), (1, 202), (1, 305)]
+    games = [(1, 1, 122, 2, 4, 2500), (5, 2, 7, 5, 5, 500), (22, 3, 14, 1, 2, 33)]
+    game_locations = [(5, 1400), (5, 1412), (22, 502), (1, 202), (1, 305)]
+    user_locations = [(1, 202), (1, 305), (2, 1400), (2, 1412), (3, 502)]
     letters = [(1, 'b'), (1, 'f'), (1, 'z'), (5, 'e'), (5, 'm'), (22, 'a'), (22, 'i')]
-    query = "INSERT INTO games (id, uid, current_score, strikes, current_location) " \
-            "VALUES (%s, %s, %s, %s, %s);"
+    query = "INSERT INTO games (id, uid, current_score, strikes, hints, current_location) " \
+            "VALUES (%s, %s, %s, %s, %s, %s);"
     cursor.executemany(query, games)
     db.commit()
     print("games")
     query = "INSERT INTO game_locations (gid, location) VALUES (%s, %s);"
-    cursor.executemany(query, locations)
+    cursor.executemany(query, game_locations)
+    db.commit()
+    query = "INSERT INTO user_locations (uid, location) VALUES (%s, %s);"
+    cursor.executemany(query, user_locations)
     db.commit()
     query = "INSERT INTO game_letter (gid, letter) VALUES (%s, %s);"
     cursor.executemany(query, letters)
