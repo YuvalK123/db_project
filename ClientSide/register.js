@@ -4,23 +4,23 @@ var port = 3000;
 $(document).ready(()=>{
 
     $("#register").click(()=>{
-    $("#loginErr").hide();
+    $("#registerErr").hide();
     var user = $("#username").val()
     var pass = $("#password").val()
     var age = $("#age").val()
     var gender = $('input[name="gender"]:checked').val();
 
     if (user.length == 0 || pass .length == 0) {
-        $("#loginErr").html("Username and password can not be empty! enter data in those fields and try again");
-        $("#loginErr").show();
+        $("#registerErr").html("Username and password can not be empty! enter data in those fields and try again");
+        $("#registerErr").show();
     }
     else if (age == "") {
-        $("#loginErr").html("Please enter a valid date date!");
-        $("#loginErr").show();
+        $("#registerErr").html("Please enter a valid date date!");
+        $("#registerErr").show();
     }
     else if (gender == undefined) {
-        $("#loginErr").html("Please select your gender and register");
-        $("#loginErr").show();
+        $("#registerErr").html("Please select your gender and register");
+        $("#registerErr").show();
     } else {
         $.ajax({
             type: 'POST',
@@ -32,13 +32,13 @@ $(document).ready(()=>{
                     window.location = "./MainMenu.html?uid="+data.uid+"&user="+user
                 }
                 else{
-                    $("#loginErr").html("Problem connecting to the serv, please try again...");
-                    $("#loginErr").show();
+                    $("#registerErr").html("Problem connecting to the serv, please try again...");
+                    $("#registerErr").show();
                 }
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
-                $("#loginErr").html("Problem connecting to the server, please try again...");
-                $("#loginErr").show();
+                $("#registerErr").html("Problem connecting to the server, please try again...");
+                $("#registerErr").show();
             }
         });
     }
