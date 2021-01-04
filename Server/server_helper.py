@@ -12,7 +12,7 @@ def datetime_tostring(o):
         return o.__str__()
 
 
-def get_from_option(option, country):
+def get_from_option(option, country, amount):
     """
     :param option: born - 1 option or died - 0 option.
     :param country: of people who died/born

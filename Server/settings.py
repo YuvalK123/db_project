@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)
 PORT = 3000
 GAME_PARAMETERS = {"score": "score", "letters": "letters", "countries": "countries", "curr_country": "country",
-                   "strikes": "strikes", "user": "uid", "game": "gid"}
+                   "strikes": "strikes", "user": "uid", "game": "gid", "hints": "hints"}
 
 mysql = MySQL()
 db_params = yaml.load(open('db.yaml'))
