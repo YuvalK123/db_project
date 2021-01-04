@@ -53,11 +53,14 @@ def get_age_statistics():
         query_avg_score_according_to_ages = "SELECT AVG(score) FROM score_history, users WHERE users.id = " \
                                             "score_history.uid AND users.age BETWEEN %s AND %s;"
         cursor = db.cursor()
-        cursor.execute(query_avg_score_according_to_ages, (0, 25))
+        twenty_five_years_ago = datetime.date.today() - relativedelta(years=25)
+        cursor.execute(query_avg_score_according_to_ages, (twenty_five_years_ago, datetime.date.today()))
         avg_score_young = cursor.fetchall()[0][0]
-        cursor.execute(query_avg_score_according_to_ages, (26, 55))
+        fifty_five_years_ago = datetime.date.today() - relativedelta(years=55)
+        cursor.execute(query_avg_score_according_to_ages, (fifty_five_years_ago, twenty_five_years_ago))
         avg_score_adults = cursor.fetchall()[0][0]
-        cursor.execute(query_avg_score_according_to_ages, (56, 99))
+        hundred_years_ago = datetime.date.today() - relativedelta(years=100)
+        cursor.execute(query_avg_score_according_to_ages, (hundred_years_ago, fifty_five_years_ago))
         avg_score_elders = cursor.fetchall()[0][0]
         avg_score_young = 0 if avg_score_young is None else avg_score_young
         avg_score_adults = 0 if avg_score_adults is None else avg_score_adults
