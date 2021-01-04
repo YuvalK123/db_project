@@ -46,6 +46,16 @@ $(document).ready(()=>{
         window.location = "./ScoresTable.html?uid="+uid+"&user="+user+"&admin="+admin
     });
 
+    
+    $("#editbtn").click(()=>{
+        window.location = "./EditProfile.html.html?uid="+uid+"&user="+user+"&admin="+admin
+    });
+
+    $("#locationsbtn").click(()=>{
+        window.location = "./Locations.html?uid="+uid+"&user="+user+"&admin="+admin
+    });
+
+
 });
 
 
