@@ -216,7 +216,7 @@ def users():
         if not age:
             age = -1
         query = f"INSERT INTO users (username, password, age, gender) VALUES " \
-                     f"('{username}', '{psw}', {age}, '{gender}');"
+                     f"('{username}', '{psw}', '{age}', '{gender}');"
         cursor = db.cursor()
         cursor.execute(query)
         db.commit()
@@ -383,6 +383,8 @@ def update_user():
         print(e)
         pass
     return str(ret_val)
+
+
 
 
 @app.route('/')

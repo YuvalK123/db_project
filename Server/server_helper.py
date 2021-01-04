@@ -72,3 +72,19 @@ def country_to_id(country=None):
     except Exception as e:
         print(e)
         return None
+
+
+def get_user_age(uid):
+    yeardays = 365.2425
+    age = -1
+    try:
+        cursor = db.cursor()
+        query = f"SELECT age FROM users WHERE id={uid}"
+        cursor.execute(query)
+        age = cursor.fetchone()
+        if age:
+            today, age = datetime.date.today(), age[0]
+            age = (today - age).days/yeardays
+    except Exception as e:
+        print(e)
+    return str(age)
