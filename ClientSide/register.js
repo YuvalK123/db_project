@@ -14,8 +14,8 @@ $(document).ready(()=>{
         $("#loginErr").html("Username and password can not be empty! enter data in those fields and try again");
         $("#loginErr").show();
     }
-    else if (!(age <= 99 || age >= 0)) {
-        $("#loginErr").html("Please enter a valid age between 0-99 and try again!");
+    else if (age == "") {
+        $("#loginErr").html("Please enter a valid date date!");
         $("#loginErr").show();
     }
     else if (gender == undefined) {
