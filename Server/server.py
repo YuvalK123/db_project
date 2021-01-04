@@ -96,19 +96,24 @@ def get_gender_statistics():
 @app.route('/hint')
 def get_hint():
     options = ["bornin, diedin, restaurant"]
+    max_hints = 3
     try:
         cursor = db.cursor()
-        option = random.randint(1, 2)
-        country = request.args.get('country')
+        country, amount = request.args.get('country'), request.args.get('amount')
         country = country_to_id(country)
-        query, keyword = get_from_option(option, country)
+        option = random.randint(1, 2)
+        try:
+            amount = max(max_hints, int(amount))
+        except:  # amount is not an int
+            amount = 1
+        query, keyword = get_from_option(options, country, amount)
         cursor.execute(query)
         result = cursor.fetchall()
         if len(result) > 0:
             record = result[0][0]
             result = f"{record} {keyword} there"
         else:
-            query, keyword = get_from_option((option % 2) + 1, country)
+            query, keyword = get_from_option((option % 2) + 1, country, None)
             cursor.execute(query)
             result = cursor.fetchone()
             print("result", result)
@@ -306,12 +311,12 @@ def save_game():
     parameters,  cursor = GAME_PARAMETERS, db.cursor()
     args = request.form
 
-    curr_location, countries, letters, strikes, score, user = \
+    curr_location, countries, letters, strikes, score, user, hints = \
         parameters["curr_country"], parameters["countries"], parameters["letters"], \
-        parameters["strikes"], parameters["score"], parameters["user"]
+        parameters["strikes"], parameters["score"], parameters["user"], parameters["hints"]
 
-    curr_location, countries, letters, strikes, score, user = \
-        args[curr_location], args[countries], args[letters], args[strikes], args[score], args[user]
+    curr_location, countries, letters, strikes, score, user, hints = \
+        args[curr_location], args[countries], args[letters], args[strikes], args[score], args[user], args[hints]
 
     print(curr_location, countries, letters, strikes, score, user)
     if str(curr_location) != "-1":
@@ -326,10 +331,10 @@ def save_game():
         game_exists = True
         game_id = game_record[0]
     if not game_exists:
-        game_query = f"INSERT INTO games (uid, current_score, strikes, current_location) VALUES " \
+        game_query = f"INSERT INTO games (uid, current_score, strikes, hints, current_location) VALUES " \
                 f"({user}, {score}, {strikes}, {curr_location});"
     else:
-        game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}, " \
+        game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}, hints = {hints}" \
                 f"current_location = {curr_location} WHERE uid={user};"
         delete_query = f"DELETE FROM game_letter WHERE gid={game_id};"
         cursor.execute(delete_query)

@@ -29,12 +29,12 @@ $(document).ready(()=>{
     });
 
     $("#newbtn").click(()=>{
-        window.location = "./Game.html?uid="+uid+"&user="+user
+        window.location = "./Game.html?uid="+uid+"&user="+user+"&admin="+admin
     });
 
     
     $("#resbtn").click(()=>{
-        window.location = "./Game.html?uid="+uid+"&user="+user+"&old=1"
+        window.location = "./Game.html?uid="+uid+"&user="+user+"&old=1"+"&admin="+admin
     });
 
 

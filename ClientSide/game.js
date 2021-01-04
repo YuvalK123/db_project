@@ -14,16 +14,16 @@ var gid;
 var info;
 var born;
 var died;
+var hintsLeft;
 
 $(document).ready(()=>{
 
+    admin = $.urlParam("admin")
     $('#dataModal').modal({
         backdrop: 'static',
         keyboard: false,
         show: false
     })
-
-
     uid = $.urlParam("uid")
      if(uid == null){
          window.location = "./"
@@ -45,11 +45,17 @@ $(document).ready(()=>{
                     mistakes = oldGame.strikes
                     points = oldGame.score
                     $("#points").html("Points: "+oldGame.score);
-                    if(oldGame.curr_country == "-1" || !oldGame.curr_country){
+                    if(!oldGame.curr_country){
                         getNewWord();
                     }
                     else{
-                        templetters = oldGame.letters.split(",")
+                        if(oldGame.letters){
+                            templetters = oldGame.letters.split(",")
+                        }
+                        else{
+                            templetters = []
+                            oldGame.letters = []
+                        }
                         for (var t = 0;t<templetters.length;t++){
                             letters.add(templetters[t]);
                         }
@@ -157,6 +163,10 @@ $(document).ready(()=>{
             }  
         });
     }
+
+    $("#menu").click(()=>{
+        window.location = "./MainMenu.html?uid="+uid+"&user="+user+"&admin="+admin
+    });
     
   $(document).on('click',".LettersOp",(event)=>{
     $(".LettersOp").removeClass("coloredBlue");
@@ -180,7 +190,7 @@ $(document).ready(()=>{
                         contentType : "application/x-www-form-urlencoded;charset=UTF-8",
                         dataType : 'json',
                         data : {
-                            'country':"-1",
+                            'country':"0",
                             'countries':wordOrg,
                             'letters':Array.from(letters).join(','),
                             'strikes':mistakes,
@@ -206,72 +216,9 @@ $(document).ready(()=>{
                         $("#dataModal").modal("show");
                         
                         $("#modTitle").html("You Won! The Answer was " + wordOrg);
-                        info = data;
-                        born = info.born.split(",");
-                        if(info.born.length > 0){
-                            $("#bornSpan").show();
-                            for (var k = 0;k<Math.min(born.length,5);k++){
-                                $("#borninfo").append("<span>"+born[k]+"</span><br>")
-                                $("#bornSpan").show();
-                            }
-                        }
-                        else{
-                            $("#bornSpan").hide();
-                        }
-                        died = info.died.split(",");
-                        if(info.died.length > 0){
-                            for (var k = 0;k<Math.min(died.length,5);k++){
-                                $("#diedinfo").append("<span>"+died[k]+"</span><br>")
-                            }
-                        }
-                        else{
-                            $("#diedSpan").hide();
-                        }
 
-                        if(born.length < 5){
-                            $("#showallborn").hide()
-                        }
-                        
-                        if(died.length < 5){
-                            $("#showalldied").hide()
-                        }
+                        dataModelParser(data);
 
-                    
-                        $("#showallborn").click((ev)=>{
-                            if($(ev.target).html() == "show all"){
-                                for (var k = 5;k<born.length;k++){
-                                    $("#borninfo").append("<span>"+born[k]+"</span><br>")
-                                }
-                                $(ev.target).html("show less")
-                            }
-                            else{
-                                $("#borninfo").empty();
-                                for (var k = 0;k<Math.min(born.length,5);k++){
-                                    $("#borninfo").append("<span>"+born[k]+"</span><br>")
-                                }
-                                $(ev.target).html("show all")
-                            }
-                        })
-                    
-                        $("#showalldied").click((ev)=>{
-                            if($(ev.target).html() == "show all"){
-                                for (var k = 5;k<died.length;k++){
-                                    $("#diedinfo").append("<span>"+died[k]+"</span><br>")
-                                }
-                                $(ev.target).html("show less")
-                            }
-                            else{
-                                $("#diedinfo").empty();
-                                for (var k = 0;k<Math.min(died.length,5);k++){
-                                    $("#diedinfo").append("<span>"+died[k]+"</span><br>")
-                                }
-                                $(ev.target).html("show all")
-                            }
-                        })
-                        $("#dataModal").modal("show");
-        
-            
-                        
                     },
                     error: function(XMLHttpRequest, textStatus, errorThrown) {
             
@@ -290,7 +237,7 @@ $(document).ready(()=>{
                 $.ajax({ 
                     type: 'GET', 
                     contentType: "application/json; charset=utf-8",
-                    url: url+"/"+port+"/gameover?game="+gid,
+                    url: "http://"+url+":"+port+"/gameover?gid="+gid,
                     success: function (data) {
 
                     },
@@ -299,76 +246,27 @@ $(document).ready(()=>{
                     }  
                 });
             }
-        }
+        
 
         $.ajax({ 
-            type: 'POST', 
+            type: 'GET', 
             contentType: "application/json; charset=utf-8",
-            data:{
-                curr_country:wordOrg,
-                countries:letters.values.join,
-                letters:Array.from(letters).join(','),
-                strikes:mistakes,
-                score:points,
-                user:uid
-            },
             url: "http://"+url+":"+port+"/get_people?country="+wordOrg, 
+            
             success: function (data) {
                 $("#city").html(wordOrg)
                 $("#dataModal").modal("show");
                 
                 $("#modTitle").html("You Lost! The Answer was " + wordOrg);
-                info = data;
-                born = info.born.split(",");
-                for (var k = 0;k<Math.min(born.length,5);k++){
-                    $("#borninfo").append("<span>"+born[k]+"</span><br>")
-                }
-                
-                died = info.died.split(",");
-                for (var k = 0;k<Math.min(died.length,5);k++){
-                    $("#diedinfo").append("<span>"+died[k]+"</span><br>")
-                }
-            
-                $("#showallborn").click((ev)=>{
-                    if($(ev.target).html() == "show all"){
-                        for (var k = 5;k<born.length;k++){
-                            $("#borninfo").append("<span>"+born[k]+"</span><br>")
-                        }
-                        $(ev.target).html("show less")
-                    }
-                    else{
-                        $("#borninfo").empty();
-                        for (var k = 0;k<Math.min(born.length,5);k++){
-                            $("#borninfo").append("<span>"+born[k]+"</span><br>")
-                        }
-                        $(ev.target).html("show all")
-                    }
-                })
-            
-                $("#showalldied").click((ev)=>{
-                    if($(ev.target).html() == "show all"){
-                        for (var k = 5;k<died.length;k++){
-                            $("#diedinfo").append("<span>"+died[k]+"</span><br>")
-                        }
-                        $(ev.target).html("show less")
-                    }
-                    else{
-                        $("#diedinfo").empty();
-                        for (var k = 0;k<Math.min(died.length,5);k++){
-                            $("#diedinfo").append("<span>"+died[k]+"</span><br>")
-                        }
-                        $(ev.target).html("show all")
-                    }
-                })
-                $("#dataModal").modal("show");
+                data = JSON.parse(data)
 
-    
+                dataModelParser(data);
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
     
             }  
         });
-
+        }
         
     }
   });
@@ -431,6 +329,115 @@ $.urlParam = function(name){
        return null;
     }
     return decodeURI(results[1]) || 0;
+}
+
+function dataModelParser(data) {
+    info = data;
+    info.born = info.born ? info.born : "";
+    born = info.born.split(",");
+    if (info.born.length > 0) {
+        $("#bornSpan").show();
+        for (var k = 0; k < Math.min(born.length, 5); k++) {
+            $("#borninfo").append("<span>" + born[k] + "</span><br>");
+            $("#bornSpan").show();
+        }
+    }
+    else {
+        $("#bornSpan").hide();
+    }
+
+
+    info.died = info.died ? info.died : "";
+    died = info.died.split(",");
+    if (info.died.length > 0) {
+        for (var k = 0; k < Math.min(died.length, 5); k++) {
+            $("#diedinfo").append("<span>" + died[k] + "</span><br>");  
+        }
+    }
+    else {
+        $("#diedSpan").hide();
+    }
+
+    info.rests = info.rests ? info.rests : "";
+    rests = info.rests.split(",");
+    if (info.rests.length > 0) {
+        for (var k = 0; k < Math.min(rests.length, 5); k++) {
+            rests[k] = rests[k].split(":")
+            $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps</a><br>");
+        }
+    }
+    else {
+        $("#restsSpan").hide();
+    }
+
+    if (born.length < 5) {
+        $("#showallborn").hide();
+    }
+
+    if (died.length < 5) {
+        $("#showalldied").hide();
+    }
+
+    if (rests.length < 5) {
+        $("#showallrests").hide();
+    }
+
+    count = info.restsCount;
+    if(count > 0){
+        $("#restsCount").html("There are "+ count +" restaurants in the city of "+wordOrg+"!" )
+    }
+
+    $("#showallborn").click((ev) => {
+        if ($(ev.target).html() == "show all") {
+            for (var k = 5; k < born.length; k++) {
+                $("#borninfo").append("<span>" + born[k] + "</span><br>");
+            }
+            $(ev.target).html("show less");
+        }
+        else {
+            $("#borninfo").empty();
+            for (var k = 0; k < Math.min(born.length, 5); k++) {
+                $("#borninfo").append("<span>" + born[k] + "</span><br>");
+            }
+            $(ev.target).html("show all");
+        }
+    });
+
+    $("#showalldied").click((ev) => {
+        if ($(ev.target).html() == "show all") {
+            for (var k = 5; k < died.length; k++) {
+                $("#diedinfo").append("<span>" + died[k] + "</span><br>");
+            }
+            $(ev.target).html("show less");
+        }
+        else {
+            $("#diedinfo").empty();
+            for (var k = 0; k < Math.min(died.length, 5); k++) {
+                $("#diedinfo").append("<span>" + died[k] + "</span><br>");
+            }
+            $(ev.target).html("show all");
+        }
+    });
+
+    $("#showallrests").click((ev) => {
+        if ($(ev.target).html() == "show all") {
+            for (var k = 5; k < rests.length; k++) {
+                rests[k] = rests[k].split(":")
+                $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps</a><br>");    
+            }
+            $(ev.target).html("show less");
+        }
+        else {
+            $("#restsinfo").empty();
+            for (var k = 0; k < Math.min(rests.length, 5); k++) {
+                rests[k] = rests[k].split(":")
+                $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps</a><br>");
+    
+            }
+            $(ev.target).html("show all");
+        }
+    });
+    $("#dataModal").modal("show");
 }
 
 function checkWin(){
