@@ -1,15 +1,4 @@
-from settings import *
-import datetime
-import random
-
-
-def DatabaseError(error=None):
-    return 'Database connection failed', 500
-
-
-def datetime_tostring(o):
-    if isinstance(o, datetime.datetime):
-        return o.__str__()
+from server_helper import *
 
 
 @app.route('/bestScores')
@@ -100,27 +89,6 @@ def get_gender_statistics():
         return DatabaseError(e)
 
 
-def get_from_option(option, country):
-    # query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country} ')"
-    if option == 1:
-        query = f"SELECT Name FROM people_info WHERE DiedIn='{country}' ORDER BY RAND() LIMIT 1;"
-        keyword = "has died"
-    else:
-        query = f"SELECT Name FROM people_info WHERE BornIn='{country}' ORDER BY RAND() LIMIT 1;"
-        keyword = "was born"
-    return query, keyword
-
-
-
-def get_from_option(option, country):
-    if option == 1:
-        query = f"SELECT Name, DiedIn FROM people_info WHERE DiedIn='{country} ' ORDER BY RAND() LIMIT 1;"
-        keyword = "has died"
-    else:
-        query = f"SELECT Name, BornIn FROM people_info WHERE BornIn='{country} ' ORDER BY RAND() LIMIT 1;"
-        keyword = "was born"
-    return query, keyword
-
 
 @app.route('/hint')
 def get_hint():
@@ -169,26 +137,6 @@ def get_random_country():
         return "fail"
     except Exception as e:
         return DatabaseError(e)
-
-
-def movies_record_to_list(cursor, movies_idx):
-    movies = ",".join(movies_idx)
-    acted_query = f"SELECT DISTINCT movies.movieName, genres.genre FROM movies, movies_genres, genres " \
-                  f"WHERE movies.id = movies_genres.movieId AND movies_genres.genreId = genres.id and " \
-                  f"movies.id IN ({movies}) ORDER BY movies.id;"
-    cursor.execute(acted_query)
-    record = cursor.fetchall()
-    # print(d_record)
-    if not record:
-        return []
-    dic = {}
-    for r in record:
-        if r[0] in dic.keys():
-            dic[r[0]].append(r[1])
-        else:
-            dic[r[0]] = [r[1]]
-    res = [{key: value} for key, value in dic.items()]
-    return res
 
 
 @app.route('/movies')
@@ -348,34 +296,6 @@ def delete_game():
         return DatabaseError(e)
 
 
-def id_to_country(country_id=None):
-    if not country_id:
-        return None
-    query = f"SELECT Location FROM locations WHERE id={country_id}"
-    try:
-        cursor = db.cursor()
-        cursor.execute(query)
-        record = cursor.fetchone()
-        return record[0]
-    except Exception as e:
-        print(e)
-        return None
-
-
-def country_to_id(country=None):
-    if not country:
-        return None
-    query = f"SELECT id FROM locations WHERE Location='{country}';"
-    print(query)
-    try:
-        cursor = db.cursor()
-        cursor.execute(query)
-        record = cursor.fetchone()
-        return record[0]
-    except Exception as e:
-        print(e)
-        return None
-
 
 @app.route('/savegame', methods=['POST'])
 def save_game():
@@ -432,23 +352,6 @@ def save_game():
         print(e)
         return DatabaseError(e)
     return str(game_id)
-
-
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    print("index")
-    if request.method == 'POST':
-        print(request)
-        task_content = request.form['content']
-        try:
-            cursor = db.cursor()
-            return redirect('/')
-        except Exception as e:
-            print(e)
-            return render_template('index.html')
-            # return 'There was an issue adding the task'
-    else:
-        return render_template('index.html')
 
 
 app.run(debug=True, port=PORT)
