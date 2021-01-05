@@ -8,35 +8,6 @@ def DatabaseError(error=None):
     return 'Database connection failed', 500
 
 
-def check_if_admin(uid, cursor=None):
-    query = f"SELECT * FROM admins WHERE uid={uid}"
-    rows = 0
-    try:
-        if not cursor:
-            cursor = db.cursor()
-        rows = cursor.execute(query)
-    except Exception as e:
-        print(e)
-    return rows != 0
-
-
-def count_records(table, cursor=None, where=None):
-    try:
-        query = f"SELECT COUNT(*) FROM {table}"
-        if where:
-            query += " WHERE " + where
-        if not cursor:
-            cursor = db.cursor()
-        cursor.execute(query)
-        rows = cursor.fetchone()
-        if rows:
-            rows = rows[0]
-        return rows
-    except Exception as e:
-        print(e)
-    return 0
-
-
 def datetime_tostring(o):
     if isinstance(o, datetime.datetime):
         return o.__str__()
@@ -220,8 +191,43 @@ def update_query(query=None, table=None, fields=None, where=None, cursor=None):
     return rows
 
 
-def insert_query(query, cursor=None):
-    pass
+def insert_query(query=None, table=None, fields=None, execmany=None, cursor=None):
+    """
+    :param query: full query to execute
+    :param table: if not query, table to update
+    :param fields: if not query, fields dictionary - {'field name': 'field value', ...}
+    :param execmany: union of tuples of values to insert
+    :param cursor: db cursor
+    :return: number of row affected, -1 if invalid input
+    """
+    if not query:
+        # build query
+        condition = table is not None and fields is not None
+        if not condition:
+            return -1
+        query = f"INSERT INTO {table} ("
+        query += ", ".join(fields.keys())
+        query += ") VALUES ("
+        if not execmany:
+            query += ",".join([f"'{x}'" for x in fields.values()])
+        else:
+            length = len(fields.keys())
+            vals = ["%s" for i in range(length)]
+            query += ", ".join(vals)
+        query += ");"
+    print(query)
+    rows = 0
+    try:
+        if not cursor:
+            cursor = db.cursor()
+        if execmany:
+            rows = cursor.executemany(query, execmany)
+        else:
+            rows = cursor.execute(query)
+        db.commit()
+    except Exception as e:
+        print(e)
+    return rows
 
 
 def select_query(query, cursor=None, is_many=True):
@@ -245,3 +251,32 @@ def select_query(query, cursor=None, is_many=True):
     except Exception as e:
         print(e)
     return tuple()
+
+
+def check_if_admin(uid, cursor=None):
+    query = f"SELECT * FROM admins WHERE uid={uid}"
+    rows = 0
+    try:
+        if not cursor:
+            cursor = db.cursor()
+        rows = cursor.execute(query)
+    except Exception as e:
+        print(e)
+    return rows != 0
+
+
+def count_records(table, cursor=None, where=None):
+    try:
+        query = f"SELECT COUNT(*) FROM {table}"
+        if where:
+            query += " WHERE " + where
+        if not cursor:
+            cursor = db.cursor()
+        cursor.execute(query)
+        rows = cursor.fetchone()
+        if rows:
+            rows = rows[0]
+        return rows
+    except Exception as e:
+        print(e)
+    return 0
