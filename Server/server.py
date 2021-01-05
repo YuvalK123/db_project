@@ -405,7 +405,7 @@ def save_game():
     return str(game_id)
 
 
-@app.route('/update_hint')
+@app.route('/update_hints')
 def use_hint():
     uid, hints = request.args.get("user"), request.args.get("hints")
     if not hints:
