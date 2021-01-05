@@ -153,7 +153,7 @@ def update_hints(uid, amount, cursor=None, relative_amount=False):
             hints = record[0]
             amount += hints
     print(amount)
-    return update_query(table="games", fields={'hints': amount}, where={'uid': uid}, cursor=cursor)
+    return update_query(table="games", fields={'hints': amount}, where=f"uid={uid}", cursor=cursor)
 
 
 def update_query(query=None, table=None, fields=None, where=None, cursor=None):
@@ -162,7 +162,7 @@ def update_query(query=None, table=None, fields=None, where=None, cursor=None):
     :param query: full query to execute
     :param table: if not query, table to update
     :param fields: if not query, fields dictionary - {'field name': 'field value', ...}
-    :param where: if not query, where clause dictionary {'field name': 'field value', ...}
+    :param where: if not query, where clause string
     :return: number of row affected
     """
 
@@ -176,9 +176,7 @@ def update_query(query=None, table=None, fields=None, where=None, cursor=None):
         fields_clause = [f"{key}='{val}'" for key, val in fields.items()]
         query += ", ".join(fields_clause)
         if where:
-            query += " WHERE "
-            where_clause = [f"{key}='{val}'" for key, val in where.items()]
-            query += ", ".join(where_clause)
+            query += " WHERE " + where
     print(query)
     rows = 0
     try:
