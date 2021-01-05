@@ -143,6 +143,7 @@ def get_user_age(uid):
 
 def update_hints(uid, amount, cursor=None, relative_amount=False):
     if relative_amount:
+        amount = int(amount)
         query = f"SELECT hints FROM games WHERE uid={uid}"
         if not cursor:
             cursor = db.cursor()
@@ -153,7 +154,8 @@ def update_hints(uid, amount, cursor=None, relative_amount=False):
             hints = record[0]
             amount += hints
     print(amount)
-    return update_query(table="games", fields={'hints': amount}, where=f"uid={uid}", cursor=cursor)
+    where = f"WHERE uid={uid}"
+    return update_query(table="games", fields={'hints': amount}, where=where, cursor=cursor)
 
 
 def update_query(query=None, table=None, fields=None, where=None, cursor=None):
@@ -162,21 +164,20 @@ def update_query(query=None, table=None, fields=None, where=None, cursor=None):
     :param query: full query to execute
     :param table: if not query, table to update
     :param fields: if not query, fields dictionary - {'field name': 'field value', ...}
-    :param where: if not query, where clause string
-    :return: number of row affected
+    :param where: if not query, where clause string starting with WHERE
+    :return: number of row affected, -1 if invalid input
     """
 
     if not query:
         # build query
         condition = table is not None and fields is not None
         if not condition:
-            print(table, fields)
             return -1
         query = f"UPDATE {table} SET "
         fields_clause = [f"{key}='{val}'" for key, val in fields.items()]
         query += ", ".join(fields_clause)
         if where:
-            query += " WHERE " + where
+            query += " " + where
     print(query)
     rows = 0
     try:
