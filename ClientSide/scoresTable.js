@@ -28,8 +28,6 @@ $(document).ready(()=>{
             }
             table.append(t_body)
             $('#table').append(table);
-            console.log(10)
-
         },
         error: function(XMLHttpRequest, textStatus, errorThrown) {
             $("#loginErr").html("Problem connecting to the server, please try again...");

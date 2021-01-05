@@ -55,6 +55,10 @@ $(document).ready(()=>{
         window.location = "./Locations.html?uid="+uid+"&user="+user+"&admin="+admin
     });
 
+    $("#adminBtn").click(()=>{
+        window.location = "./Admin.html?uid="+uid+"&user="+user+"&admin="+admin
+    });
+
 
 });
 
