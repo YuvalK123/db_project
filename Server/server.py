@@ -367,8 +367,9 @@ def save_game():
         game_query = f"INSERT INTO games (uid, current_score, strikes, hints, current_location) VALUES " \
                 f"({user}, {score}, {strikes}, {hints}, {curr_location});"
     else:
-        game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}, hints = {hints}" \
+        game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}" \
                 f"current_location = {curr_location} WHERE uid={user};"
+        update_hints(uid=user, amount=hints, relative_amount=True)
         delete_query = f"DELETE FROM game_letter WHERE gid={game_id};"
         cursor.execute(delete_query)
         db.commit()
@@ -388,17 +389,29 @@ def save_game():
             query = "INSERT INTO game_letter (gid, letter) VALUES (%s, %s);"
             cursor.executemany(query, letters_arr)
         if len(locations) > 0:
-            locations_arr = []
-            for location in locations:
-                locations_arr.append(country_to_id(location))
-            locations = [(game_id, location) for location in locations_arr if location is not None]
+            locations_idx = countries_to_ids(locations)
+            locations = [(game_id, location) for location in locations_idx if location is not None]
             query = "INSERT INTO game_locations (gid, location) VALUES (%s, %s);"
             cursor.executemany(query, locations)
+            user_locations = filter_countries(locations_idx, user)
+            if len(user_locations) > 0:
+                query = f"INSERT INTO user_locations (uid, location) VALUES (%s, %s)"
+                locations = [(user, location) for location in user_locations if location is not None]
+                cursor.executemany(query, locations)
         db.commit()
     except Exception as e:
         print(e)
         return DatabaseError(e)
     return str(game_id)
+
+
+@app.route('/update_hint')
+def use_hint():
+    uid, hints = request.args.get("user"), request.args.get("hints")
+    if not hints:
+        hints = -1
+    t = update_hints(uid=uid, amount=hints, relative_amount=True)
+    return str(t)
 
 
 @app.route('/update_user', methods=['POST', 'GET'])
