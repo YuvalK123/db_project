@@ -13,19 +13,51 @@ def datetime_tostring(o):
         return o.__str__()
 
 
-def get_from_option(option, country, amount):
+def get_from_option(option, country):
     """
     :param option: born - 1 option or died - 0 option.
-    :param country: of people who died/born
+    :param country: string of people who died/born
     :return:
     """
     if option == 1:
-        query = f"SELECT Name FROM people_info WHERE DiedIn='{country}' ORDER BY RAND() LIMIT 1;"
+        query = f"SELECT Name FROM people_info WHERE DiedIn='{country}' ORDER BY RAND() LIMIT 3;"
         keyword = "has died"
     else:
-        query = f"SELECT Name FROM people_info WHERE BornIn='{country}' ORDER BY RAND() LIMIT 1;"
+        query = f"SELECT Name FROM people_info WHERE BornIn='{country}' ORDER BY RAND() LIMIT 3;"
         keyword = "was born"
     return query, keyword
+
+
+def get_hints(country, amount, cursor=None):
+    if not cursor:
+        cursor = db.cursor()
+    queries = {"born": [], "died": [], "rests": []}
+    born_count = count_records(table="people_info", where=f"DiedIn='{country}'", cursor=cursor)
+    died_count = count_records(table="people_info", where=f"BornIn='{country}'", cursor=cursor)
+    if born_count:
+        query = f"SELECT Name FROM people_info WHERE BornIn='{country}' ORDER BY RAND() LIMIT {amount};"
+        born = select_query(query=query, is_many=True, cursor=cursor)
+        queries["born"] = born
+    if died_count:
+        query = f"SELECT Name FROM people_info WHERE DiedIn='{country}' ORDER BY RAND() LIMIT {amount};"
+        born = select_query(query=query, is_many=True, cursor=cursor)
+        queries["born"] = born
+    if born_count + died_count < amount:
+        rests_count = count_records(table="restaurants", where=f"city_id={country}", cursor=cursor)
+        if rests_count:
+            rests_hints = []
+            query = f"SELECT name, COUNT(name) AS c FROM restaurants WHERE city_id = {country} " \
+                    f"GROUP BY name ORDER BY c DESC;"
+            rests = select_query(query=query, is_many=True, cursor=cursor)
+            if rests:
+                for rest in rests:
+                    hint = f"{rest[0]} has {rest[1]} restaurants there"
+                    rests_hints.append(hint)
+            rests_hints.append(f"There is a total of {rests_count} restaurants there")
+            queries["rests"] = rests_hints
+    print("q", queries)
+    return queries
+
 
 def movies_record_to_list(cursor, movies_idx):
     movies = ",".join(movies_idx)

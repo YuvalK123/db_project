@@ -98,36 +98,49 @@ def get_gender_statistics():
 
 @app.route('/hint')
 def get_hint():
-    options = ["bornin, diedin, restaurant"]
     max_hints = 3
     try:
         cursor = db.cursor()
         country, amount = request.args.get('country'), request.args.get('amount')
         country = country_to_id(country)
-        option = random.randint(1, 2)
         try:
-            amount = max(max_hints, int(amount))
+            amount = min(max_hints, int(amount))
         except:  # amount is not an int
             amount = 1
-        query, keyword = get_from_option(options, country, amount)
-        cursor.execute(query)
-        result = cursor.fetchall()
-        if len(result) > 0:
-            record = result[0][0]
-            result = f"{record} {keyword} there"
-        else:
-            query, keyword = get_from_option((option % 2) + 1, country, None)
-            cursor.execute(query)
-            result = cursor.fetchone()
-            print("result", result)
-            if result is None:
-                result = "No Available Hint"
-            elif len(result) > 0:
-                record = result[0]
-                result = f"{record} was {keyword} there"
-            else:
-                result = "No Available Hint"
-        return result
+        if amount < 1:
+            return "No Available Hint"
+        # query, keyword = get_from_option(option, country)
+        print("queirs")
+        hints_list = get_hints(country, amount, cursor=cursor)
+        hints = []
+        born_count, died_count, rests_count = len(hints_list["born"]), len(hints_list["died"]), \
+                                              len(hints_list["rests"])
+        if born_count > 0:
+            i = 0
+            for hint in hints_list["born"]:
+                hints.append(hint)
+                i += 1
+                cond_a, cond_b = i >= amount, (i >= (amount - 1) and died_count > 0)
+                if cond_a or cond_b:
+                    break
+        if died_count and len(hints) < amount:
+            i = 0
+            for hint in hints_list["died"]:
+                hints.append(hint)
+                i += 1
+                if i >= amount:
+                    break
+        if rests_count and len(hints) < amount:
+            i = 0
+            for hint in hints_list["rests"]:
+                hints.append(hint)
+                i += 1
+                if i >= amount:
+                    break
+        if len(hints) == 0:
+            return "No Available Hint"
+
+        return json.dumps(hints)
     except Exception as e:
         print(e)
         return DatabaseError(e)
@@ -176,7 +189,6 @@ def get_person_movies():
         actor_movies = tuple((x[0]) for x in record if actor_id in str(x[1]))
         director_movies = tuple(str(x[0]) for x in record if directors_id in str(x[1]))
         a_record, d_record = None, None
-        # print(actor_movies, director_movies)
         if len(actor_movies) > 0:
             ret["actedIn"] = movies_record_to_list(cursor, actor_movies)
         if len(director_movies) > 0:
@@ -188,6 +200,7 @@ def get_person_movies():
     return json.dumps(ret)
     pass
 
+
 @app.route('/get_people')
 def get_all_related():
     country = request.args.get('country')
@@ -197,10 +210,6 @@ def get_all_related():
                   f"(SELECT id FROM locations WHERE location='{country}');"
     rests_count_query = f"SELECT COUNT(name) FROM restaurants WHERE city_id=" \
                         f"(SELECT id FROM locations WHERE location='{country}');"
-    # print(born_query)
-    # print(died_query)
-    # print(rests_query)
-    # print(rests_count_query)
     try:
         cursor = db.cursor()
         cursor.execute(born_query)
@@ -213,7 +222,6 @@ def get_all_related():
         cursor.execute(rests_query)
         rests_country = cursor.fetchall()
         rests_country = [":".join(x) for x in rests_country]
-
 
         cursor.execute(rests_count_query)
         rests_count = cursor.fetchall()
@@ -288,16 +296,6 @@ def get_game():
         if letters_records:
             letters = [letter[0] for letter in letters_records]
             ret_value["letters"] = ",".join(letters)
-
-        '''
-        query = f"SELECT location FROM globalinfoapp.locations WHERE id IN " \
-                f"(SELECT location FROM game_locations WHERE gid={game_id});"
-        cursor.execute(query)
-        locations_records = cursor.fetchall()
-        if locations_records:
-            locations = (location[0] for location in locations_records)
-            ret_value["countries"] = ", ".join(locations)
-        '''
     except Exception as e:
         print(e)
         return DatabaseError(e)
@@ -330,10 +328,7 @@ def users_countries():
     if not uid:
         return json.dumps(None)
     if country_range:
-        print(country_range)
         country_range = country_range.split(",")
-        print(country_range)
-        max_id = count_records(table="user_locations", where=f"uid={uid}")
         start_range, end_range = int(country_range[0]), int(country_range[1])
         min_range, max_range = min(start_range, end_range),  max(start_range, end_range)
     else:
@@ -355,9 +350,7 @@ def users_countries():
                     f"LIMIT {min_range}, {max_range};"
         print(query)
         rows = cursor.execute(query)
-        print(rows)
         records = cursor.fetchall()
-        print("records", len(records), records)
         if records:
             places = [x[0] for x in records if x[0] != '']
             return ",".join(places)
@@ -365,7 +358,6 @@ def users_countries():
         print(e)
         pass
     return json.dumps(None)
-
 
 
 @app.route('/savegame', methods=['POST'])
