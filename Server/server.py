@@ -267,15 +267,16 @@ def users():
 @app.route('/getgame', methods=['GET'])
 def get_game():
     user = request.args.get(GAME_PARAMETERS["user"])
-    ret_value = {"score": None, "letters": None, "curr_country": None, "strikes": None, "gid": None}
+    ret_value = {"score": None, "letters": None, "curr_country": None, "strikes": None, "gid": None, "hints": None}
     try:
         cursor = db.cursor()
-        query = f"SELECT id, current_score, strikes, current_location FROM games WHERE uid={user};"
-        cursor.execute(query)
+        query = f"SELECT id, current_score, strikes, hints, current_location FROM games WHERE uid={user};"
+        rows = cursor.execute(query)
         game_record = cursor.fetchone()
         if not game_record:
             return json.dumps(None)
-        ret_value["gid"], ret_value["score"], ret_value["strikes"], ret_value["curr_country"] = game_record
+        ret_value["gid"], ret_value["score"], ret_value["strikes"], ret_value["hints"], ret_value["curr_country"] = \
+            game_record
         ret_value["curr_country"] = id_to_country(ret_value["curr_country"])
         game_id = ret_value["gid"]
         query = f"SELECT letter FROM game_letter WHERE gid={game_id}"
