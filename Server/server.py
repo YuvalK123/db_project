@@ -326,19 +326,46 @@ def delete_game():
 @app.route('/user_country')
 def users_countries():
     uid = request.args.get('uid')
-    query = f"SELECT location FROM user_locations WHERE uid={uid};"
+    country_range = request.args.get('range')
+    if not uid:
+        return json.dumps(None)
+    if country_range:
+        print(country_range)
+        country_range = country_range.split(",")
+        print(country_range)
+        max_id = count_records(table="user_locations", where=f"uid={uid}")
+        start_range, end_range = int(country_range[0]), int(country_range[1])
+        min_range, max_range = min(start_range, end_range),  max(start_range, end_range)
+    else:
+        min_range, max_range = 0, 50
+
     try:
         cursor = db.cursor()
+        is_admin = check_if_admin(uid, cursor)
+        if is_admin:
+            max_id = count_records(table="locations")
+            max_range = min(max_range, max_id)
+            query = f"SELECT location FROM locations WHERE id BETWEEN {min_range} AND {max_range};"
+        else:
+            max_id = count_records(table="user_locations", where=f"uid={uid}")
+            if max_id < min_range:
+                max_range = max_id
+                min_range = 0
+            query = f"SELECT location FROM locations WHERE id IN (SELECT location FROM user_locations WHERE uid={uid}) " \
+                    f"LIMIT {min_range}, {max_range};"
+        print(query)
         rows = cursor.execute(query)
-        if rows <= 0:
-            return ""
+        print(rows)
         records = cursor.fetchall()
-        places = [id_to_country(x[0]) for x in records if x[0] > 0]
-        return ",".join(places)
+        print("records", len(records), records)
+        if records:
+            places = [x[0] for x in records if x[0] != '']
+            return ",".join(places)
     except Exception as e:
         print(e)
         pass
-    return "None"
+    return json.dumps(None)
+
 
 
 @app.route('/savegame', methods=['POST'])
