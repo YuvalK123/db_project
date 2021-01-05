@@ -3,8 +3,38 @@ import datetime
 from dateutil.relativedelta import relativedelta
 import random
 
+
 def DatabaseError(error=None):
     return 'Database connection failed', 500
+
+
+def check_if_admin(uid, cursor=None):
+    query = f"SELECT * FROM admins WHERE uid={uid}"
+    rows = 0
+    try:
+        if not cursor:
+            cursor = db.cursor()
+        rows = cursor.execute(query)
+    except Exception as e:
+        print(e)
+    return rows != 0
+
+
+def count_records(table, cursor=None, where=None):
+    try:
+        query = f"SELECT COUNT(*) FROM {table}"
+        if where:
+            query += " WHERE " + where
+        if not cursor:
+            cursor = db.cursor()
+        cursor.execute(query)
+        rows = cursor.fetchone()
+        if rows:
+            rows = rows[0]
+        return rows
+    except Exception as e:
+        print(e)
+    return 0
 
 
 def datetime_tostring(o):

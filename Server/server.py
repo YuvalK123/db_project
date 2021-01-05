@@ -23,7 +23,8 @@ def get_best_score():
         cursor.execute(best_score_query)
         result = cursor.fetchall()
         if len(result) == 1:
-            message = f"{result[0][0]} has the highest score which is {result[0][1]} since {result[0][2]}."
+            message = f"{result[0][0]} has the highest score which is {result[0][1]} since {result[0][2]}.\n"
+            print(message)
             return message
         else:
             return "0 games were ended"
@@ -40,7 +41,8 @@ def get_number_of_gamers():
                            "score_history)) AS all_gamers;"
         cursor.execute(num_gamers_query)
         result = cursor.fetchone()
-        message = f"Number of people playing by far: {result[0][0]}"
+        message = f"Number of people playing by far: {result[0]}\n"
+        print(message)
         return message
     except Exception as e:
         print(e)
@@ -66,7 +68,8 @@ def get_age_statistics():
         avg_score_adults = 0 if avg_score_adults is None else avg_score_adults
         avg_score_elders = 0 if avg_score_elders is None else avg_score_elders
         message = f"Average score for ages 0-25: {avg_score_young}\nAverage score for ages 26-55: " \
-                  f"{avg_score_adults}\n Average score for ages 56-99: {avg_score_elders}"
+                  f"{avg_score_adults}\nAverage score for ages 56-99: {avg_score_elders}\n"
+        print(message)
         return message
     except Exception as e:
         print(e)
@@ -85,7 +88,7 @@ def get_gender_statistics():
         cursor.execute(query_gender_score_sum, ('f', ))
         female_sum = cursor.fetchall()[0][0]
         female_sum = 0 if female_sum is None else female_sum
-        message = f"Cumulative score for males: {male_sum}\nCumulative score for females: {female_sum}"
+        message = f"Cumulative score for males: {male_sum}\nCumulative score for females: {female_sum}\n"
         return message
     except Exception as e:
         print(e)
@@ -323,19 +326,46 @@ def delete_game():
 @app.route('/user_country')
 def users_countries():
     uid = request.args.get('uid')
-    query = f"SELECT location FROM user_locations WHERE uid={uid};"
+    country_range = request.args.get('range')
+    if not uid:
+        return json.dumps(None)
+    if country_range:
+        print(country_range)
+        country_range = country_range.split(",")
+        print(country_range)
+        max_id = count_records(table="user_locations", where=f"uid={uid}")
+        start_range, end_range = int(country_range[0]), int(country_range[1])
+        min_range, max_range = min(start_range, end_range),  max(start_range, end_range)
+    else:
+        min_range, max_range = 0, 50
+
     try:
         cursor = db.cursor()
+        is_admin = check_if_admin(uid, cursor)
+        if is_admin:
+            max_id = count_records(table="locations")
+            max_range = min(max_range, max_id)
+            query = f"SELECT location FROM locations WHERE id BETWEEN {min_range} AND {max_range};"
+        else:
+            max_id = count_records(table="user_locations", where=f"uid={uid}")
+            if max_id < min_range:
+                max_range = max_id
+                min_range = 0
+            query = f"SELECT location FROM locations WHERE id IN (SELECT location FROM user_locations WHERE uid={uid}) " \
+                    f"LIMIT {min_range}, {max_range};"
+        print(query)
         rows = cursor.execute(query)
-        if rows <= 0:
-            return ""
+        print(rows)
         records = cursor.fetchall()
-        places = [id_to_country(x[0]) for x in records if x[0] > 0]
-        return ",".join(places)
+        print("records", len(records), records)
+        if records:
+            places = [x[0] for x in records if x[0] != '']
+            return ",".join(places)
     except Exception as e:
         print(e)
         pass
-    return "None"
+    return json.dumps(None)
+
 
 
 @app.route('/savegame', methods=['POST'])
