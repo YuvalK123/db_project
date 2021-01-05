@@ -99,51 +99,44 @@ def get_gender_statistics():
 @app.route('/hint')
 def get_hint():
     max_hints = 3
+    country, amount = request.args.get('country'), request.args.get('amount')
+    country = country_to_id(country)
     try:
-        cursor = db.cursor()
-        country, amount = request.args.get('country'), request.args.get('amount')
-        country = country_to_id(country)
-        try:
-            amount = min(max_hints, int(amount))
-        except:  # amount is not an int
-            amount = 1
-        if amount < 1:
-            return "No Available Hint"
-        # query, keyword = get_from_option(option, country)
-        print("queirs")
-        hints_list = get_hints(country, amount, cursor=cursor)
-        hints = []
-        born_count, died_count, rests_count = len(hints_list["born"]), len(hints_list["died"]), \
-                                              len(hints_list["rests"])
-        if born_count > 0:
-            i = 0
-            for hint in hints_list["born"]:
-                hints.append(hint)
-                i += 1
-                cond_a, cond_b = i >= amount, (i >= (amount - 1) and died_count > 0)
-                if cond_a or cond_b:
-                    break
-        if died_count and len(hints) < amount:
-            i = 0
-            for hint in hints_list["died"]:
-                hints.append(hint)
-                i += 1
-                if i >= amount:
-                    break
-        if rests_count and len(hints) < amount:
-            i = 0
-            for hint in hints_list["rests"]:
-                hints.append(hint)
-                i += 1
-                if i >= amount:
-                    break
-        if len(hints) == 0:
-            return "No Available Hint"
-
-        return json.dumps(hints)
-    except Exception as e:
-        print(e)
-        return DatabaseError(e)
+        amount = min(max_hints, int(amount))
+    except:  # amount is not an int
+        amount = 1
+    if amount < 1:
+        return "No Available Hint"
+    # query, keyword = get_from_option(option, country)
+    hints_list = get_hints(country, amount)
+    hints = []
+    born_count, died_count, rests_count = len(hints_list["born"]), len(hints_list["died"]), \
+                                            len(hints_list["rests"])
+    if born_count > 0:
+        i = 0
+        for hint in hints_list["born"]:
+            hints.append(hint)
+            i += 1
+            cond_a, cond_b = i >= amount, (i >= (amount - 1) and died_count > 0)
+            if cond_a or cond_b:
+                break
+    if died_count and len(hints) < amount:
+        i = 0
+        for hint in hints_list["died"]:
+            hints.append(hint)
+            i += 1
+            if i >= amount:
+                break
+    if rests_count and len(hints) < amount:
+        i = 0
+        for hint in hints_list["rests"]:
+            hints.append(hint)
+            i += 1
+            if i >= amount:
+                break
+    if len(hints) == 0:
+        return "No Available Hint"
+    return json.dumps(hints)
 
 
 @app.route('/get_country')
