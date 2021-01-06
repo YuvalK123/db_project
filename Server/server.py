@@ -477,13 +477,20 @@ def add_person():
     movie, genres, job = arg("movie"), arg("genres"), arg("job")
     if not (bornin or diedin):
         return "No Location!"
-    born = add_location(bornin) if bornin else "NULL"
-    died = add_location(diedin) if bornin else "NULL"
     if not gender:
         gender = 'f'
     # insert to people_info
-    person_query = f"INSERT INTO people_info (name, gender, BornIn, DiedIn) VALUES ('{name}', '{gender}', " \
-                   f"{born}, {died});"
+    born = add_location(bornin) if bornin else "NULL"
+    died = add_location(diedin) if bornin else "NULL"
+    if bornin and diedin:
+        person_query = f"INSERT INTO people_info (name, gender, BornIn, DiedIn) VALUES ('{name}', '{gender}', " \
+                       f"{born}, {died});"
+    elif bornin:  # if only born in
+        person_query = f"INSERT INTO people_info (name, gender, BornIn) VALUES ('{name}', '{gender}', " \
+                       f"{born});"
+    else:  # if only died in
+        person_query = f"INSERT INTO people_info (name, gender, DiedIn) VALUES ('{name}', '{gender}', " \
+                       f"{died});"
     pid = -1
     try:
         cursor = db.cursor()
@@ -495,9 +502,10 @@ def add_person():
     if not movie:
         return str(pid)
     # add movie
-    movie_id = -1
     movie_query = f"INSERT INTO movies (movieName) VALUES ('{movie}')"
     rows = insert_query(query=movie_query, cursor=cursor)
+    if rows < 1:
+        return "Failed inserting movie"
     movie_id = cursor.lastrowid
     # add person movie
     if not job:
@@ -515,7 +523,7 @@ def add_person():
 
 @app.route('/tryme')
 def tryme():
-    query = "INSERT INTO users (username, password, age, gender) VALUES ('mewsow', '12134', '1999-09-09', 'm')"
+    query = 'INSERT INTO games (current_score, strikes, hints) VALUES (222, 3, 2)'
     cursor = db.cursor()
     rows = insert_query(query=query, cursor=cursor)
     idd = cursor.lastrowid
