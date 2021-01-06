@@ -291,7 +291,6 @@ $(document).ready(()=>{
             url: "http://"+url+":"+port+'/hint?country='+wordOrg, 
             success: function (data) {
                 alert(data);
-                hintCount++;
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
     
