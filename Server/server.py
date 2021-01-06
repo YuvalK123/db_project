@@ -96,7 +96,7 @@ def get_gender_statistics():
 
 
 @app.route('/hint')
-def get_hints():
+def server_hints():
     country, user = request.args.get('country'), request.args.get('user')
     if not (user or country):
         return "invalid input"
