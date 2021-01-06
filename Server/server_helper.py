@@ -37,11 +37,13 @@ def get_hints(country, amount, cursor=None):
     if born_count:
         query = f"SELECT Name FROM people_info WHERE BornIn='{country}' ORDER BY RAND() LIMIT {amount};"
         born = select_query(query=query, is_many=True, cursor=cursor)
+        born = [f"{x[0]} was born there" for x in born]
         queries["born"] = born
     if died_count:
         query = f"SELECT Name FROM people_info WHERE DiedIn='{country}' ORDER BY RAND() LIMIT {amount};"
-        born = select_query(query=query, is_many=True, cursor=cursor)
-        queries["born"] = born
+        died = select_query(query=query, is_many=True, cursor=cursor)
+        died = [f"{x[0]} died there" for x in died]
+        queries["died"] = died
     if born_count + died_count < amount:
         rests_count = count_records(table="restaurants", where=f"city_id={country}", cursor=cursor)
         if rests_count:
@@ -117,13 +119,14 @@ def countries_to_ids(countries):
     return idx
 
 
-def country_to_id(country=None):
+def country_to_id(country=None, cursor=None):
     if not country:
         return None
     query = f"SELECT id FROM locations WHERE Location='{country}';"
     print(query)
     try:
-        cursor = db.cursor()
+        if not cursor:
+            cursor = db.cursor()
         cursor.execute(query)
         record = cursor.fetchone()
         return record[0]
