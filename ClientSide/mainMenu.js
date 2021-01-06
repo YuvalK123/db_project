@@ -48,7 +48,7 @@ $(document).ready(()=>{
 
     
     $("#editbtn").click(()=>{
-        window.location = "./EditProfile.html.html?uid="+uid+"&user="+user+"&admin="+admin
+        window.location = "./EditProfile.html?uid="+uid+"&user="+user+"&admin="+admin
     });
 
     $("#locationsbtn").click(()=>{
