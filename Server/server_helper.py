@@ -265,6 +265,18 @@ def insert_query(query=None, table=None, fields=None, execmany=None, cursor=None
     return rows
 
 
+def delete_query(query, cursor=None, to_commit=True):
+    try:
+        if not cursor:
+            cursor = db.cursor()
+        rows = cursor.execute(query)
+        if to_commit:
+            db.commit()
+    except Exception as e:
+        return -1
+    return rows
+
+
 def select_query(query, cursor=None, is_many=True):
     """
     :param query: any select query

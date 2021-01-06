@@ -235,11 +235,16 @@ def get_all_related():
         print(e)
         return DatabaseError(e)
 
+
 @app.route('/users', methods=['GET', 'POST'], )
 def users():
     username, psw = request.args.get('user'), request.args.get('pass')
     uid, is_admin = -1, False
     if request.method == 'POST':
+        try:
+            cursor = db.cursor()
+        except Exception as e:
+            return DatabaseError(e)
         gender, age = request.args.get('gender'), request.args.get('age')
         if not gender:
             gender = ''
@@ -247,9 +252,7 @@ def users():
             age = "1970-01-01"
         query = f"INSERT INTO users (username, password, age, gender) VALUES " \
                      f"('{username}', '{psw}', '{age}', '{gender}');"
-        cursor = db.cursor()
-        cursor.execute(query)
-        db.commit()
+        insert_query(query, cursor=cursor)
         query = f"SELECT id FROM users WHERE (username='{username}' AND password='{psw}') LIMIT 1;"
         cursor.execute(query)
         record = cursor.fetchone()
@@ -305,18 +308,16 @@ def delete_game():
     game_id = request.args.get(GAME_PARAMETERS["game"])
     try:
         cursor = db.cursor()
-        letters_query = f"DELETE FROM game_letter WHERE gid={game_id}"
-        cursor.execute(letters_query)
-        locations_query = f"DELETE FROM game_locations WHERE gid={game_id}"
-        cursor.execute(locations_query)
-        db.commit()
-        game_query = f"DELETE FROM games WHERE id={game_id}"
-        cursor.execute(game_query)
-        db.commit()
-        return "200"
     except Exception as e:
         print(e)
         return DatabaseError(e)
+    rows = letters_query = f"DELETE FROM game_letter WHERE gid={game_id}"
+    delete_query(letters_query, cursor=cursor, to_commit=False)
+    locations_query = f"DELETE FROM game_locations WHERE gid={game_id}"
+    rows = delete_query(locations_query, cursor=cursor)
+    game_query = f"DELETE FROM games WHERE id={game_id}"
+    rows = delete_query(game_query, cursor=cursor)
+    return str(rows)
 
 
 @app.route('/user_country')
@@ -387,39 +388,39 @@ def save_game():
     if not game_exists:
         game_query = f"INSERT INTO games (uid, current_score, strikes, hints, current_location) VALUES " \
                 f"({user}, {score}, {strikes}, {hints}, {curr_location});"
+        insert_rows = insert_query(query=game_query, cursor=cursor)
     else:
         game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}" \
                 f"current_location = {curr_location} WHERE uid={user};"
+        update_rows = update_query(query=game_query, cursor=cursor)
         update_hints(uid=user, amount=hints, relative_amount=True)
-        delete_query = f"DELETE FROM game_letter WHERE gid={game_id};"
-        cursor.execute(delete_query)
-        db.commit()
-
-    cursor.execute(game_query)
-    db.commit()
+        delete_letters = f"DELETE FROM game_letter WHERE gid={game_id};"
+        rows = delete_query(delete_letters, cursor=cursor)
     if not game_exists:
         cursor.execute(get_query)
         game_record = cursor.fetchone()
         game_id = game_record[0]
-
     # insert letters and locations
     letters_arr, locations = letters.split(","), countries.split(",")
     letters_arr = [(game_id, letter) for letter in letters_arr]
     try:
         if len(letters_arr) > 0:
             query = "INSERT INTO game_letter (gid, letter) VALUES (%s, %s);"
-            cursor.executemany(query, letters_arr)
+            insert_query(query=query, execmany=letters_arr, cursor=cursor)
+            # cursor.executemany(query, letters_arr)
         if len(locations) > 0:
             locations_idx = countries_to_ids(locations)
             locations = [(game_id, location) for location in locations_idx if location is not None]
             query = "INSERT INTO game_locations (gid, location) VALUES (%s, %s);"
-            cursor.executemany(query, locations)
+            # cursor.executemany(query, locations)
+            insert_query(query=query, execmany=locations, cursor=cursor)
             user_locations = filter_countries(locations_idx, user)
             if len(user_locations) > 0:
                 query = f"INSERT INTO user_locations (uid, location) VALUES (%s, %s)"
                 locations = [(user, location) for location in user_locations if location is not None]
-                cursor.executemany(query, locations)
-        db.commit()
+                insert_query(query=query, execmany=locations, cursor=cursor)
+                # cursor.executemany(query, locations)
+        # db.commit()
     except Exception as e:
         print(e)
         return DatabaseError(e)
@@ -453,8 +454,9 @@ def update_user():
             return str(ret_val)
         try:
             cursor = db.cursor()
-            ret_val = cursor.execute(query)
-            db.commit()
+            update_query(query=query, cursor=cursor)
+            # ret_val = cursor.execute(query)
+            # db.commit()
         except Exception as e:
             print(e)
             pass
