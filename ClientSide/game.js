@@ -15,6 +15,7 @@ var info;
 var born;
 var died;
 var hintsLeft;
+var usedHints=0;
 
 $(document).ready(()=>{
 
@@ -41,6 +42,8 @@ $(document).ready(()=>{
                 if(data){
                     oldGame = data;
                     gid = oldGame.gid
+                    hintsLeft = oldGame.hints
+                    $("#hintsCountInfo").html(hintsLeft)
                     $("#Mis").html(oldGame.strikes);
                     mistakes = oldGame.strikes
                     points = oldGame.score
@@ -89,7 +92,6 @@ $(document).ready(()=>{
                             letterOptions[i] = alphabet[i]
                         }
                         letterOptions = shuffle(letterOptions)
-                
                         for(var i=0;i<26;i++){
                             if(!oldGame.letters.includes(letterOptions[i])){
                                 if(word.includes(letterOptions[i])){
@@ -111,6 +113,8 @@ $(document).ready(()=>{
     else{
         mistakes = 5;
         points = 0;
+        hintsLeft = 5;
+        $("#hintsCountInfo").html(hintsLeft)
         $("#Mis").html(mistakes);
         $("#points").html("Points: "+points)
         getNewWord();
@@ -195,7 +199,8 @@ $(document).ready(()=>{
                             'letters':Array.from(letters).join(','),
                             'strikes':mistakes,
                             'score':points,
-                            'uid':uid
+                            'uid':uid,
+                            'hints':usedHints
                         },
                     url: "http://"+url+":"+port+"/savegame", 
                     success: function (data) {
@@ -276,18 +281,26 @@ $(document).ready(()=>{
   });
 
   $("#hint").click(()=>{
-    $.ajax({ 
-        type: 'GET', 
-        contentType: "application/json; charset=utf-8",
-        url: "http://"+url+":"+port+'/hint?country='+wordOrg, 
-        success: function (data) {
-            alert(data);
-            hintCount++;
-        },
-        error: function(XMLHttpRequest, textStatus, errorThrown) {
-
-        }  
-        });
+      if(hintsLeft>0){
+          hintsLeft--;
+          usedHints--;
+          $("#hintsCountInfo").html(hintsLeft)
+        $.ajax({ 
+            type: 'GET', 
+            contentType: "application/json; charset=utf-8",
+            url: "http://"+url+":"+port+'/hint?country='+wordOrg, 
+            success: function (data) {
+                alert(data);
+                hintCount++;
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+    
+            }  
+            });
+      }
+      else{
+        alert("No More Hints Left!");
+      }
     });
 
 
@@ -302,12 +315,14 @@ $(document).ready(()=>{
                 'letters':Array.from(letters).join(','),
                 'strikes':mistakes,
                 'score':points,
-                'uid':uid
+                'uid':uid,
+                'hints':usedHints
             },
         url: "http://"+url+":"+port+"/savegame", 
         success: function (data) {
             gid = data;
             alert("Game Saved!");
+            usedHints = 0;
 
         },
         error: function(XMLHttpRequest, textStatus, errorThrown) {
