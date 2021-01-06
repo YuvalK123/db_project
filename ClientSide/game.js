@@ -128,7 +128,7 @@ $(document).ready(()=>{
         $.ajax({ 
             type: 'GET', 
             contentType: "application/json; charset=utf-8",
-            url: "http://"+url+":"+port+'/hint?country='+wordOrg+'&amount='+hintsLeft+'&uid='+uid, 
+            url: "http://"+url+":"+port+'/hint?country='+wordOrg+'&uid='+uid,
             success: function (data) {
                 hints = data;
             },

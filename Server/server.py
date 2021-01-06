@@ -13,6 +13,7 @@ def get_best_scores():
         print(e)
         return DatabaseError(e)
 
+
 @app.route('/admin/best_score')
 def get_best_score():
     try:
@@ -82,10 +83,10 @@ def get_gender_statistics():
         query_gender_score_sum = "SELECT SUM(score) FROM users, score_history WHERE users.id = score_history.uid AND " \
                                  "users.gender = %s;"
         cursor = db.cursor()
-        cursor.execute(query_gender_score_sum, ('m', ))
+        cursor.execute(query_gender_score_sum, ('m',))
         male_sum = cursor.fetchall()[0][0]
         male_sum = 0 if male_sum is None else male_sum
-        cursor.execute(query_gender_score_sum, ('f', ))
+        cursor.execute(query_gender_score_sum, ('f',))
         female_sum = cursor.fetchall()[0][0]
         female_sum = 0 if female_sum is None else female_sum
         message = f"Cumulative score for males: {male_sum}\nCumulative score for females: {female_sum}\n"
@@ -95,23 +96,28 @@ def get_gender_statistics():
         return DatabaseError(e)
 
 
-
 @app.route('/hint')
-def get_hint():
-    max_hints = 3
-    country, amount = request.args.get('country'), request.args.get('amount')
-    country = country_to_id(country)
+def server_hints():
+    country, user = request.args.get('country'), request.args.get('user')
+    if not (user or country):
+        return "invalid input"
     try:
-        amount = min(max_hints, int(amount))
-    except:  # amount is not an int
-        amount = 1
+        cursor = db.cursor()
+    except Exception as e:
+        return DatabaseError(e)
+    hints_query = f"SELECT hints FROM games WHERE uid={user}"
+    hints = select_query(query=hints_query, is_many=False, cursor=cursor)
+    if not hints:
+        return "No Available Hint"
+    amount = hints[0]
+    country = country_to_id(country, cursor=cursor)
     if amount < 1:
         return "No Available Hint"
     # query, keyword = get_from_option(option, country)
-    hints_list = get_hints(country, amount)
+    hints_list = get_hints(country, amount, cursor=cursor)
     hints = []
     born_count, died_count, rests_count = len(hints_list["born"]), len(hints_list["died"]), \
-                                            len(hints_list["rests"])
+                                          len(hints_list["rests"])
     if born_count > 0:
         i = 0
         for hint in hints_list["born"]:
@@ -230,6 +236,7 @@ def get_all_related():
         print(e)
         return DatabaseError(e)
 
+
 @app.route('/users', methods=['GET', 'POST'], )
 def users():
     username, psw = request.args.get('user'), request.args.get('pass')
@@ -241,7 +248,7 @@ def users():
         if not age:
             age = "1970-01-01"
         query = f"INSERT INTO users (username, password, age, gender) VALUES " \
-                     f"('{username}', '{psw}', '{age}', '{gender}');"
+                f"('{username}', '{psw}', '{age}', '{gender}');"
         cursor = db.cursor()
         cursor.execute(query)
         db.commit()
@@ -323,7 +330,7 @@ def users_countries():
     if country_range:
         country_range = country_range.split(",")
         start_range, end_range = int(country_range[0]), int(country_range[1])
-        min_range, max_range = min(start_range, end_range),  max(start_range, end_range)
+        min_range, max_range = min(start_range, end_range), max(start_range, end_range)
     else:
         min_range, max_range = 0, 50
 
@@ -355,7 +362,7 @@ def users_countries():
 
 @app.route('/savegame', methods=['POST'])
 def save_game():
-    parameters,  cursor = GAME_PARAMETERS, db.cursor()
+    parameters, cursor = GAME_PARAMETERS, db.cursor()
     args = request.form
 
     curr_location, countries, letters, strikes, score, user, hints = \
@@ -381,10 +388,10 @@ def save_game():
         game_id = game_record[0]
     if not game_exists:
         game_query = f"INSERT INTO games (uid, current_score, strikes, hints, current_location) VALUES " \
-                f"({user}, {score}, {strikes}, {hints}, {curr_location});"
+                     f"({user}, {score}, {strikes}, {hints}, {curr_location});"
     else:
         game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}" \
-                f"current_location = {curr_location} WHERE uid={user};"
+                     f"current_location = {curr_location} WHERE uid={user};"
         update_hints(uid=user, amount=hints, relative_amount=True)
         delete_query = f"DELETE FROM game_letter WHERE gid={game_id};"
         cursor.execute(delete_query)
