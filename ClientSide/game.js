@@ -113,7 +113,7 @@ $(document).ready(()=>{
     else{
         mistakes = 5;
         points = 0;
-        hintsLeft = 5;
+        hintsLeft = 3;
         $("#hintsCountInfo").html(hintsLeft)
         $("#Mis").html(mistakes);
         $("#points").html("Points: "+points)
