@@ -16,6 +16,8 @@ var born;
 var died;
 var hintsLeft;
 var usedHints=0;
+var hints = []
+var hintsindex = 0;
 
 $(document).ready(()=>{
 
@@ -43,9 +45,11 @@ $(document).ready(()=>{
                     oldGame = data;
                     gid = oldGame.gid
                     hintsLeft = oldGame.hints
+
                     $("#hintsCountInfo").html(hintsLeft)
                     $("#Mis").html(oldGame.strikes);
                     mistakes = oldGame.strikes
+                    getHints()
                     points = oldGame.score
                     $("#points").html("Points: "+oldGame.score);
                     if(!oldGame.curr_country){
@@ -120,6 +124,20 @@ $(document).ready(()=>{
         getNewWord();
     }
 
+    function getHints(){
+        $.ajax({ 
+            type: 'GET', 
+            contentType: "application/json; charset=utf-8",
+            url: "http://"+url+":"+port+'/hint?country='+wordOrg+'&amount='+hintsLeft+'&uid='+uid, 
+            success: function (data) {
+                hints = data;
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+    
+            }  
+        });
+    }
+
     function getNewWord(){
         $.ajax({ 
             type: 'GET', 
@@ -135,7 +153,7 @@ $(document).ready(()=>{
                 word = wordOrg.toLowerCase();
                 wLen = word.length
                 hiddenWord = new Array(wLen);
-                
+                getHints()
                 for(var i=0;i<wLen;i++){
                     hiddenWord[i]=["_",word[i]];
                 }
@@ -285,17 +303,7 @@ $(document).ready(()=>{
           hintsLeft--;
           usedHints--;
           $("#hintsCountInfo").html(hintsLeft)
-        $.ajax({ 
-            type: 'GET', 
-            contentType: "application/json; charset=utf-8",
-            url: "http://"+url+":"+port+'/hint?country='+wordOrg, 
-            success: function (data) {
-                alert(data);
-            },
-            error: function(XMLHttpRequest, textStatus, errorThrown) {
-    
-            }  
-            });
+           alert(hints[hintsindex++])
       }
       else{
         alert("No More Hints Left!");
