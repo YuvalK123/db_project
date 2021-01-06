@@ -468,6 +468,61 @@ def update_user():
             return DatabaseError(e)
 
 
+@app.route('/add_person', methods=['POST'])
+def add_person():
+    # problem - are there places in the db insert where we have places with people who didnt died,
+    # and that's why their removed in the loading?
+    arg = request.form
+    name, gender, bornin, diedin = arg("name"), arg("gender"), arg("bornin"), arg("diedin")
+    movie, genres, job = arg("movie"), arg("genres"), arg("job")
+    if not (bornin or diedin):
+        return "No Location!"
+    born = add_location(bornin) if bornin else "NULL"
+    died = add_location(diedin) if bornin else "NULL"
+    if not gender:
+        gender = 'f'
+    # insert to people_info
+    person_query = f"INSERT INTO people_info (name, gender, BornIn, DiedIn) VALUES ('{name}', '{gender}', " \
+                   f"{born}, {died});"
+    pid = -1
+    try:
+        cursor = db.cursor()
+        rows = insert_query(query=person_query, cursor=cursor)
+        pid = cursor.lastrowid
+    except Exception as e:
+        return DatabaseError(e)
+    # no movie to add, se we're done
+    if not movie:
+        return str(pid)
+    # add movie
+    movie_id = -1
+    movie_query = f"INSERT INTO movies (movieName) VALUES ('{movie}')"
+    rows = insert_query(query=movie_query, cursor=cursor)
+    movie_id = cursor.lastrowid
+    # add person movie
+    if not job:
+        job = '0'  # actor by default
+    if movie_id > 0:
+        query = f"INSERT INTO people_movies (pid, movieId, jon_id) VALUES ({pid}, {movie_id}, {job});"
+        rows = insert_query(query=query, cursor=cursor)
+    # if movie has no genres, return person's id
+    if not genres:
+        return str(pid)
+    # add genres
+    # need to decide how to get them
+    return ""
+
+
+@app.route('/tryme')
+def tryme():
+    query = "INSERT INTO users (username, password, age, gender) VALUES ('mewsow', '12134', '1999-09-09', 'm')"
+    cursor = db.cursor()
+    rows = insert_query(query=query, cursor=cursor)
+    idd = cursor.lastrowid
+    print(idd)
+    return str(idd)
+
+
 @app.route('/')
 def index():
     return "Welcome to the server"

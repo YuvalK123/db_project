@@ -297,7 +297,7 @@ def check_if_admin(uid, cursor=None):
     return rows != 0
 
 
-def count_records(table, cursor=None, where=None):
+def count_records(table: str, cursor=None, where=None):
     try:
         query = f"SELECT COUNT(*) FROM {table}"
         if where:
@@ -312,3 +312,28 @@ def count_records(table, cursor=None, where=None):
     except Exception as e:
         print(e)
     return 0
+
+
+def add_location(location: str):
+    """
+
+    :param location: string name of place
+    :return: id of place in db
+    """
+    try:
+        cursor = db.cursor()
+    except:
+        return -1
+    record = select_query(query=f"SELECT id FROM locations WHERE LOWER(location)='{location.strip()}'",
+                          cursor=cursor, is_many=False)
+    if record:
+        return record[0]
+    query = f"INSERT INTO locations (location) VALUES ('{location.strip()}');"
+    rows = insert_query(query=query, cursor=cursor)
+    try:
+        country_id = cursor.lastrowid
+    except:
+        country_id = -1
+    return country_id
+
+
