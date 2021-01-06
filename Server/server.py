@@ -95,20 +95,25 @@ def get_gender_statistics():
         return DatabaseError(e)
 
 
-
 @app.route('/hint')
-def get_hint():
-    max_hints = 3
-    country, amount = request.args.get('country'), request.args.get('amount')
-    country = country_to_id(country)
+def server_hints():
+    country, user = request.args.get('country'), request.args.get('user')
+    if not (user or country):
+        return "invalid input"
     try:
-        amount = min(max_hints, int(amount))
-    except:  # amount is not an int
-        amount = 1
+        cursor = db.cursor()
+    except Exception as e:
+        return DatabaseError(e)
+    hints_query = f"SELECT hints FROM games WHERE uid={user}"
+    hints = select_query(query=hints_query, is_many=False, cursor=cursor)
+    if not hints:
+        return "No Available Hint"
+    amount = hints[0]
+    country = country_to_id(country, cursor=cursor)
     if amount < 1:
         return "No Available Hint"
     # query, keyword = get_from_option(option, country)
-    hints_list = get_hints(country, amount)
+    hints_list = get_hints(country, amount, cursor=cursor)
     hints = []
     born_count, died_count, rests_count = len(hints_list["born"]), len(hints_list["died"]), \
                                             len(hints_list["rests"])
