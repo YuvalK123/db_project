@@ -528,19 +528,18 @@ def add_person():
     return ""
 
 
-@app.route('/tryme')
-def tryme():
-    query = 'INSERT INTO games (current_score, strikes, hints) VALUES (222, 3, 2)'
-    cursor = db.cursor()
-    rows = insert_query(query=query, cursor=cursor)
-    idd = cursor.lastrowid
-    print(idd)
-    return str(idd)
+@app.route('/get_genres')
+def get_all_genres():
+    query = "SELECT genre FROM genres"
+    records = select_query(query=query, is_many=True)
+    if records:
+        records = [x[0] for x in records]
+    return json.dumps(records)
 
 
 @app.route('/')
 def index():
-    return "Welcome to the server"
+    return redirect(url_for('static', filename='index.html'))
 
 
 app.run(debug=True, port=PORT)
