@@ -138,7 +138,6 @@ def country_to_id(country=None, cursor=None):
 
 def filter_countries(countries_idx, uid, table="user_locations"):
     """
-
     :param countries_idx: union of countries indices
     :param uid: user id.
     :param table: table with location and uid field
@@ -351,5 +350,3 @@ def add_location(location: str):
     except:
         country_id = -1
     return country_id
-
-
