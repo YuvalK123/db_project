@@ -394,6 +394,7 @@ def save_game():
         game_exists = True
         game_id = game_record[0]
     if not game_exists:
+        hints = max(0,3-hints)
         game_query = f"INSERT INTO games (uid, current_score, strikes, hints, current_location) VALUES " \
                 f"({user}, {score}, {strikes}, {hints}, {curr_location});"
         insert_rows = insert_query(query=game_query, cursor=cursor)

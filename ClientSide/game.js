@@ -99,7 +99,7 @@ $(document).ready(()=>{
                         letterOptions = shuffle(letterOptions)
                         for(var i=0;i<26;i++){
                             if(!oldGame.letters.includes(letterOptions[i])){
-                                if(word.includes(letterOptions[i]) && admin =="true"){
+                                if(word.includes(letterOptions[i]) && admin =="1"){
                                     $("#lettersOption").append("<button class='btn LettersOp goodLetter' style='color:black;margin-right:10px;width:50px;margin-bottom:10px'>"+letterOptions[i]+"</button>")
                                 }
                                 else{
@@ -173,7 +173,7 @@ $(document).ready(()=>{
                 letterOptions = shuffle(letterOptions)
         
                 for(var i=0;i<26;i++){
-                    if(word.includes(letterOptions[i])  && admin =="true" ){
+                    if(word.includes(letterOptions[i])  && admin =="1" ){
                         $("#lettersOption").append("<button class='btn LettersOp goodLetter' style='color:black;margin-right:10px;width:50px;margin-bottom:10px'>"+letterOptions[i]+"</button>")
                     }
                     else{
@@ -219,7 +219,7 @@ $(document).ready(()=>{
                             'strikes':mistakes,
                             'score':points,
                             'uid':uid,
-                            'hints':usedHints
+                            'hints':(usedHints+1)
                         },
                     url: "http://"+url+":"+port+"/savegame", 
                     success: function (data) {
@@ -296,7 +296,13 @@ $(document).ready(()=>{
   });
 
   $("#next").click(()=>{
-      window.location = "./Game.html?uid="+uid+"&user="+user+"&old=1"
+      if(admin == "1"){
+        window.location = "./Game.html?uid="+uid+"&user="+user+"&old=1&admin=1"
+      }
+      else{
+        window.location = "./Game.html?uid="+uid+"&user="+user+"&old=1"
+      }
+      
   });
 
   $("#hint").click(()=>{
