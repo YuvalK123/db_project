@@ -173,7 +173,7 @@ $(document).ready(()=>{
                 letterOptions = shuffle(letterOptions)
         
                 for(var i=0;i<26;i++){
-                    if(word.includes(letterOptions[i])){
+                    if(word.includes(letterOptions[i])  && admin =="true" ){
                         $("#lettersOption").append("<button class='btn LettersOp goodLetter' style='color:black;margin-right:10px;width:50px;margin-bottom:10px'>"+letterOptions[i]+"</button>")
                     }
                     else{
