@@ -28,6 +28,7 @@ $(document).ready(()=>{
             url: "http://"+url+":"+port+'/users?user=' + user + '&pass=' + pass + '&gender=' + gender + '&age=' + age,
             success: function (data) {
                 console.log(data)
+                data = JSON.parse(data)
                 if (data && data.uid){
                     window.location = "./MainMenu.html?uid="+data.uid+"&user="+user
                 }
