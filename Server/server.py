@@ -489,13 +489,23 @@ def get_all_genres():
 def add_person():
     # problem - are there places in the db insert where we have places with people who didnt died,
     # and that's why their removed in the loading?
-    arg = request.form
-    name, gender, bornin, diedin = arg("name"), arg("gender"), arg("bornin"), arg("diedin")
-    movie, genres, job = arg("movie"), arg("genres"), arg("job")
+    arg = request.json
+    try:
+        name, gender, diedin, bornin = arg["name"], None, None, None
+    except Exception as e:  # no name or gender
+        return "Invalid Input"
+    keys = arg.keys()
+    if "diedin" in keys:
+        diedin = arg["diedin"]
+    if "bornin" in keys:
+        bornin = arg["bornin"]
+    if "gender" in keys:
+        gender = arg["gender"]
+    else:
+        gender = 'f'
     if not (bornin or diedin):
         return "No Location!"
-    if not gender:
-        gender = 'f'
+
     # insert to people_info
     born = add_location(bornin) if bornin else "NULL"
     died = add_location(diedin) if bornin else "NULL"
@@ -516,7 +526,13 @@ def add_person():
     except Exception as e:
         return DatabaseError(e)
     # no movie to add, se we're done
-    if not movie:
+    try:
+        movie, genres, job = arg["movie"], None, None
+        if "genres" in keys:
+            genres = arg["genres"]
+        if "job" in keys:
+            job = arg["job"]
+    except Exception as e:
         return str(pid)
     # add movie
     movie_query = f"INSERT INTO movies (movieName) VALUES ('{movie}')"
@@ -537,14 +553,6 @@ def add_person():
     # need to decide how to get them
     return ""
 
-
-@app.route('/get_genres')
-def get_all_genres():
-    query = "SELECT genre FROM genres"
-    records = select_query(query=query, is_many=True)
-    if records:
-        records = [x[0] for x in records]
-    return json.dumps(records)
 
 
 @app.route('/')

@@ -28,14 +28,24 @@ $(document).ready(()=>{
         var died_in = $("#diedIn").val()
         var movie = $("#movie").val()
         var role = $('input[name="role"]:checked').val()
-        var gender = $('input[name="gender"]:checked').val();
-
+        var gender = $('input[name="gender"]:checked').val()
         // checks the genres checked and adds to list
         var genres = get_selected_checkboxes_array()
+        var obj = {
+            "name": name,
+            "bornin": born_in,
+            "diedin": died_in,
+            "gender": gender,
+            "movie": movie,
+            "genres": genres,
+            "job": role
+        };
         $.ajax({
             type: 'POST',
             contentType: "application/json; charset=utf-8",
-            url: "http://"+url+":"+port+'/add_person?name='+name+"&gender="+gender+"&bornin="+born_in+"&diedin"+died_in+"&movie="+movie+"&genres="+genres+"&job="+role,
+            dataType: "json",
+            data: obj,
+            url: "http://"+url+":"+port+'/add_person',
             success: function (data) {
                 $("#addDataMsg").html(data);
                 $("#addDataMsg").show();
@@ -79,3 +89,5 @@ function get_selected_checkboxes_array(){
     });
     return ch_list;
 }
+
+//name='+name+"&gender="+gender+"&bornin="+born_in+"&diedin"+died_in+"&movie="+movie+"&genres="+genres+"&job="+role
