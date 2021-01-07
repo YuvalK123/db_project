@@ -1,5 +1,7 @@
 var url = "localhost";
 var port = 3000;
+var fetchIndex = 0;
+var maxCount = 0;
 $(document).ready(()=>{
     var uid = $.urlParam("uid")
      if(uid == null){
@@ -8,34 +10,72 @@ $(document).ready(()=>{
     var user = $.urlParam("user")
     $("#welcome").html("Welcome "+user+"!");
 
+    $(document).on("click",".loc",(ev)=>{
+        wordOrg = $(ev.target).html()
+        $.ajax({ 
+            type: 'GET', 
+            contentType: "application/json; charset=utf-8",
+            url: "http://"+url+":"+port+"/get_people?country="+wordOrg, 
+            
+            success: function (data) {
+                $("#city").html(wordOrg)
+                $("#dataModal").modal("show");                                
+                data = JSON.parse(data)
+
+                dataModelParser(data);
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+    
+            }  
+        });
+    })
+
+    $("#showMore").click(()=>{
+        if(fetchIndex+50 < maxCount){
+            $.ajax({ 
+                type: 'GET', 
+                contentType: "application/json; charset=utf-8",
+                url: "http://"+url+":"+port+'/user_country?uid='+uid+"&range="+fetchIndex+","+(fetchIndex+50), 
+                success: function (data) {
+                    if(data){
+                        data = JSON.parse(data)
+                        var count = data.count;
+                        fetchIndex +=50
+                        data = data.locations.split(",")
+                        for (var t=0;t<data.length;t++){
+                            $("#locations").append("<p style=\"font-size: 18px;\">&#9675; <b ><a href='#' class='loc' style='color:white'>"+data[t]+"</a></b></p>");
+                        }
+                    }
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+        
+                }  
+            });
+        
+        }
+
+    });
+    
+
     $.ajax({ 
         type: 'GET', 
         contentType: "application/json; charset=utf-8",
         url: "http://"+url+":"+port+'/user_country?uid='+uid, 
         success: function (data) {
             if(data){
-                data = data.split(",")
-                for (var t=0;t<data.length;t++){
-                    $("#locations").append("<p style=\"font-size: 18px;\">&#9675; <b ><a href='#' style='color:white'>"+data[t]+"</a></b></p>");
-                    $("#locations").click((ev)=>{
-                        wordOrg = $(ev.target).html()
-                        $.ajax({ 
-                            type: 'GET', 
-                            contentType: "application/json; charset=utf-8",
-                            url: "http://"+url+":"+port+"/get_people?country="+wordOrg, 
-                            
-                            success: function (data) {
-                                $("#city").html(wordOrg)
-                                $("#dataModal").modal("show");                                
-                                data = JSON.parse(data)
+                data = JSON.parse(data)
                 
-                                dataModelParser(data);
-                            },
-                            error: function(XMLHttpRequest, textStatus, errorThrown) {
-                    
-                            }  
-                        });
-                    })
+                fetchIndex = 50;
+                maxCount = data.count;
+                if(maxCount > 50){
+                    $("#showMore").show()
+                }
+                else{
+                    $("#showMore").hide()
+                }
+                data = data.locations.split(",")
+                for (var t=0;t<data.length;t++){
+                    $("#locations").append("<p style=\"font-size: 18px;\">&#9675; <b ><a href='#' class='loc' style='color:white'>"+data[t]+"</a></b></p>");
                 }
             }
         },
