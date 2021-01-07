@@ -346,12 +346,13 @@ def users_countries():
             max_id = count_records(table="user_locations", where=f"uid={uid}")
             if max_id < 0:
                 return json.dumps(fail)
-            ret["count"] = max_id
+
             if max_id < min_range:
                 max_range = max_id
                 min_range = 0
             query = f"SELECT location FROM locations WHERE id IN (SELECT location FROM user_locations WHERE uid={uid}) " \
                     f"LIMIT {min_range}, {max_range};"
+        ret["count"] = max_id
         print(query)
         rows = cursor.execute(query)
         records = cursor.fetchall()
