@@ -360,7 +360,7 @@ def users_countries():
             places = [x[0] for x in records if x[0] != '']
             locations = ",".join(places)
             ret["locations"] = locations
-        return ret
+        return json.dumps(ret)
     except Exception as e:
         print(e)
         pass
