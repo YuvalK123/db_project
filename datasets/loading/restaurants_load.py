@@ -74,7 +74,6 @@ def load(db, path):
 
     cursor = db.cursor()
     # create table of countries. it is important that the file of the data will be places in the location specified.
-    cursor.execute("DROP TABLE rest_temp")
     cursor.execute("CREATE TABLE `rest_temp` (`name` VARCHAR(256) NULL,`city_id` VARCHAR(45) NULL,`latitude` VARCHAR(45) NULL,`longitude` VARCHAR(45) NULL,`url` VARCHAR(1000) NULL)")
 
 
@@ -125,10 +124,10 @@ def load(db, path):
     cursor.executemany(query, final_rests)
     db.commit()
 
-    query = "ALTER TABLE `globalinfoapp`.`restaurants` ADD COLUMN `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT FIRST,ADD PRIMARY KEY (`id`);"
+    query = "ALTER TABLE `restaurants` ADD COLUMN `id` SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT FIRST,ADD PRIMARY KEY (`id`);"
     cursor.execute(query)
     db.commit()
 
-
-
+    cursor.execute("DROP TABLE rest_temp")
+    db.commit()
 
