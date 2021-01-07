@@ -36,6 +36,7 @@ def get_best_score():
 @app.route('/admin/quantity_of_gamers')
 def get_number_of_gamers():
     try:
+        print("hello")
         cursor = db.cursor()
         num_gamers_query = "SELECT COUNT(*) FROM ((SELECT uid FROM games) UNION (SELECT uid FROM " \
                            "score_history)) AS all_gamers;"
@@ -473,6 +474,15 @@ def update_user():
         except Exception as e:
             print(e)
             return DatabaseError(e)
+
+
+@app.route('/get_genres')
+def get_all_genres():
+    query = "SELECT genre FROM genres"
+    records = select_query(query=query, is_many=True)
+    if records:
+        records = [x[0] for x in records]
+    return json.dumps(records)
 
 
 @app.route('/add_person', methods=['POST'])

@@ -54,11 +54,15 @@ $(document).ready(()=>{
         }
     });
 
+    var uid = $.urlParam("uid")
+    var user = $.urlParam("user")
+    var admin = $.urlParam("admin")
     $("#menu").click(()=>{
-        var uid = $.urlParam("uid")
-        var user = $.urlParam("user")
-        var admin = $.urlParam("admin")
         window.location = "./MainMenu.html?uid="+uid+"&user="+user+"&admin="+admin
+    });
+
+    $("#addData").click(()=>{
+        window.location = "./AddData.html?uid="+uid+"&user="+user+"&admin="+admin
     });
 });
 

@@ -74,7 +74,7 @@ def load(db, path):
 
     cursor = db.cursor()
     # create table of countries. it is important that the file of the data will be places in the location specified.
-    cursor.execute("DROP TABLE rest_temp")
+    # cursor.execute("DROP TABLE rest_temp")
     cursor.execute("CREATE TABLE `rest_temp` (`name` VARCHAR(256) NULL,`city_id` VARCHAR(45) NULL,`latitude` VARCHAR(45) NULL,`longitude` VARCHAR(45) NULL,`url` VARCHAR(1000) NULL)")
 
 
