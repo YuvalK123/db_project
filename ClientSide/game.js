@@ -50,7 +50,7 @@ $(document).ready(()=>{
                     $("#hintsCountInfo").html(hintsLeft)
                     $("#Mis").html(oldGame.strikes);
                     mistakes = oldGame.strikes
-                    getHints()
+                    getHints(false)
                     points = oldGame.score
                     $("#points").html("Points: "+oldGame.score);
                     if(!oldGame.curr_country){
@@ -125,11 +125,18 @@ $(document).ready(()=>{
         getNewWord();
     }
 
-    function getHints(){
+    function getHints(isNew){
+        var newVal;
+        if(isNew){
+            newVal = "true"
+        }
+        else{
+            newVal = "false"
+        }
         $.ajax({ 
             type: 'GET', 
             contentType: "application/json; charset=utf-8",
-            url: "http://"+url+":"+port+'/hint?country='+wordOrg+'&uid='+uid,
+            url: "http://"+url+":"+port+'/hint?country='+wordOrg+'&user='+uid+'&new='+newVal,
             success: function (data) {
                 hints = data;
             },
@@ -154,7 +161,7 @@ $(document).ready(()=>{
                 word = wordOrg.toLowerCase();
                 wLen = word.length
                 hiddenWord = new Array(wLen);
-                getHints()
+                getHints(true)
                 for(var i=0;i<wLen;i++){
                     hiddenWord[i]=["_",word[i]];
                 }
