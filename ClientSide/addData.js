@@ -31,6 +31,12 @@ $(document).ready(()=>{
         var gender = $('input[name="gender"]:checked').val()
         // checks the genres checked and adds to list
         var genres = get_selected_checkboxes_array()
+        if (gender == undefined) {
+            gender = ""
+        }
+        if (role == undefined) {
+            role = ""
+        }
         var obj = {
             "name": name,
             "bornin": born_in,
@@ -51,11 +57,12 @@ $(document).ready(()=>{
                     $("#addDataMsg").html("data was successfully saved!");
                     $("#addDataMsg").show();
                 } else {
-                    $("#addDataMsg").html("Something went wrong, try again!");
+                    $("#addDataMsg").html("Something went wring..<br>Please make sure that Name of personality and at least one of the cities are not empty and try again!");
                     $("#addDataMsg").show();
                 }
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
+            console.log(textStatus)
                 $("#addDataMsg").html("Problem connecting to the server, please try again...");
                 $("#addDataMsg").show();
             }
@@ -95,4 +102,3 @@ function get_selected_checkboxes_array(){
     return ch_list;
 }
 
-//name='+name+"&gender="+gender+"&bornin="+born_in+"&diedin"+died_in+"&movie="+movie+"&genres="+genres+"&job="+role

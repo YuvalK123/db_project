@@ -487,25 +487,16 @@ def get_all_genres():
 
 @app.route('/add_person', methods=['POST'])
 def add_person():
-    # problem - are there places in the db insert where we have places with people who didnt died,
-    # and that's why their removed in the loading?
     arg = request.json
-    try:
-        name, gender, diedin, bornin = arg["name"], None, None, None
-    except Exception as e:  # no name or gender
-        return "Invalid Input"
     keys = arg.keys()
-    if "diedin" in keys:
-        diedin = arg["diedin"]
-    if "bornin" in keys:
-        bornin = arg["bornin"]
-    if "gender" in keys:
-        gender = arg["gender"]
-    else:
-        gender = 'f'
+    name = arg["name"] if "name" in keys else ''
+    if name == '':
+        return "-1"
+    bornin = arg['bornin'] if 'bornin' in keys else None
+    diedin = arg['diedin'] if 'diedin' in keys else None
+    gender = arg['gender'] if 'gender' in keys else 'f'
     if not (bornin or diedin):
-        return "No Location!"
-
+        return "-1"
     # insert to people_info
     born = add_location(bornin) if bornin else "NULL"
     died = add_location(diedin) if bornin else "NULL"
@@ -526,29 +517,27 @@ def add_person():
     except Exception as e:
         return DatabaseError(e)
     # no movie to add, se we're done
-    try:
-        movie, genres, job = arg["movie"], None, None
-        if "genres" in keys:
-            genres = arg["genres"]
-        if "job" in keys:
-            job = arg["job"]
-    except Exception as e:
+    movie = arg["movie"] if "movie" in keys else ''
+    if movie == '':
         return str(pid)
+    job = arg["job"] if "job" in keys else '0'
+    genres = arg["genres"] if "genres" in keys else ''
     # add movie
     movie_query = f"INSERT INTO movies (movieName) VALUES ('{movie}')"
     rows = insert_query(query=movie_query, cursor=cursor)
     if rows < 1:
-        return "Failed inserting movie"
+        return "-1"
     movie_id = cursor.lastrowid
     # add person movie
     if not job:
         job = '0'  # actor by default
     if movie_id > 0:
-        query = f"INSERT INTO people_movies (pid, movieId, job_id) VALUES ({pid}, {movie_id}, {job});"
+        query = f"INSERT INTO people_movies (pid, movieId, jon_id) VALUES ({pid}, {movie_id}, {job});"
         rows = insert_query(query=query, cursor=cursor)
     # if movie has no genres, return person's id
-    print(genres)
     if not genres:
+        return str(pid)
+    if len(genres) <=0:
         return str(pid)
     # add genres
     # genres = [genres list]
@@ -560,7 +549,6 @@ def add_person():
         insert = f"INSERT INTO movies_genres (movieId, genreId) VALUES (%s, %s)"
         rows = insert_query(insert, cursor=cursor, execmany=genres_values)
     return str(pid)
-
 
 
 @app.route('/')
