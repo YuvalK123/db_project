@@ -63,7 +63,7 @@ def get_hints(country, amount, cursor=None):
 
 
 def movies_record_to_list(cursor, movies_idx):
-    movies = ",".join(movies_idx)
+    movies = ",".join(str(v) for v in movies_idx)
     acted_query = f"SELECT DISTINCT movies.movieName, genres.genre FROM movies, movies_genres, genres " \
                   f"WHERE movies.id = movies_genres.movieId AND movies_genres.genreId = genres.id and " \
                   f"movies.id IN ({movies}) ORDER BY movies.id;"
