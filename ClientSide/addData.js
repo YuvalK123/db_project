@@ -44,11 +44,16 @@ $(document).ready(()=>{
             type: 'POST',
             contentType: "application/json; charset=utf-8",
             dataType: "json",
-            data: obj,
+            data: JSON.stringify(obj),
             url: "http://"+url+":"+port+'/add_person',
             success: function (data) {
-                $("#addDataMsg").html(data);
-                $("#addDataMsg").show();
+                if (data > 0) {
+                    $("#addDataMsg").html("data was successfully saved!");
+                    $("#addDataMsg").show();
+                } else {
+                    $("#addDataMsg").html("Something went wrong, try again!");
+                    $("#addDataMsg").show();
+                }
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
                 $("#addDataMsg").html("Problem connecting to the server, please try again...");

@@ -544,14 +544,22 @@ def add_person():
     if not job:
         job = '0'  # actor by default
     if movie_id > 0:
-        query = f"INSERT INTO people_movies (pid, movieId, jon_id) VALUES ({pid}, {movie_id}, {job});"
+        query = f"INSERT INTO people_movies (pid, movieId, job_id) VALUES ({pid}, {movie_id}, {job});"
         rows = insert_query(query=query, cursor=cursor)
     # if movie has no genres, return person's id
+    print(genres)
     if not genres:
         return str(pid)
     # add genres
-    # need to decide how to get them
-    return ""
+    # genres = [genres list]
+    genres_str = ", ".join([f"'{g}'" for g in genres])
+    query = f"SELECT id FROM genres WHERE genre IN ({genres_str});"
+    genres_ids = select_query(query=query, cursor=cursor, is_many=True)
+    if genres_ids:
+        genres_values = [(movie_id, g) for g in genres_ids]
+        insert = f"INSERT INTO movies_genres (movieId, genreId) VALUES (%s, %s)"
+        rows = insert_query(insert, cursor=cursor, execmany=genres_values)
+    return str(pid)
 
 
 
