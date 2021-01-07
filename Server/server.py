@@ -13,7 +13,6 @@ def get_best_scores():
         print(e)
         return DatabaseError(e)
 
-
 @app.route('/admin/best_score')
 def get_best_score():
     try:
@@ -37,6 +36,7 @@ def get_best_score():
 @app.route('/admin/quantity_of_gamers')
 def get_number_of_gamers():
     try:
+        print("hello")
         cursor = db.cursor()
         num_gamers_query = "SELECT COUNT(*) FROM ((SELECT uid FROM games) UNION (SELECT uid FROM " \
                            "score_history)) AS all_gamers;"
@@ -83,10 +83,10 @@ def get_gender_statistics():
         query_gender_score_sum = "SELECT SUM(score) FROM users, score_history WHERE users.id = score_history.uid AND " \
                                  "users.gender = %s;"
         cursor = db.cursor()
-        cursor.execute(query_gender_score_sum, ('m',))
+        cursor.execute(query_gender_score_sum, ('m', ))
         male_sum = cursor.fetchall()[0][0]
         male_sum = 0 if male_sum is None else male_sum
-        cursor.execute(query_gender_score_sum, ('f',))
+        cursor.execute(query_gender_score_sum, ('f', ))
         female_sum = cursor.fetchall()[0][0]
         female_sum = 0 if female_sum is None else female_sum
         message = f"Cumulative score for males: {male_sum}\nCumulative score for females: {female_sum}\n"
@@ -117,7 +117,7 @@ def server_hints():
     hints_list = get_hints(country, amount, cursor=cursor)
     hints = []
     born_count, died_count, rests_count = len(hints_list["born"]), len(hints_list["died"]), \
-                                          len(hints_list["rests"])
+                                            len(hints_list["rests"])
     if born_count > 0:
         i = 0
         for hint in hints_list["born"]:
@@ -242,16 +242,18 @@ def users():
     username, psw = request.args.get('user'), request.args.get('pass')
     uid, is_admin = -1, False
     if request.method == 'POST':
+        try:
+            cursor = db.cursor()
+        except Exception as e:
+            return DatabaseError(e)
         gender, age = request.args.get('gender'), request.args.get('age')
         if not gender:
             gender = ''
         if not age:
             age = "1970-01-01"
         query = f"INSERT INTO users (username, password, age, gender) VALUES " \
-                f"('{username}', '{psw}', '{age}', '{gender}');"
-        cursor = db.cursor()
-        cursor.execute(query)
-        db.commit()
+                     f"('{username}', '{psw}', '{age}', '{gender}');"
+        insert_query(query, cursor=cursor)
         query = f"SELECT id FROM users WHERE (username='{username}' AND password='{psw}') LIMIT 1;"
         cursor.execute(query)
         record = cursor.fetchone()
@@ -307,33 +309,32 @@ def delete_game():
     game_id = request.args.get(GAME_PARAMETERS["game"])
     try:
         cursor = db.cursor()
-        letters_query = f"DELETE FROM game_letter WHERE gid={game_id}"
-        cursor.execute(letters_query)
-        locations_query = f"DELETE FROM game_locations WHERE gid={game_id}"
-        cursor.execute(locations_query)
-        db.commit()
-        game_query = f"DELETE FROM games WHERE id={game_id}"
-        cursor.execute(game_query)
-        db.commit()
-        return "200"
     except Exception as e:
         print(e)
         return DatabaseError(e)
+    rows = letters_query = f"DELETE FROM game_letter WHERE gid={game_id}"
+    delete_query(letters_query, cursor=cursor, to_commit=False)
+    locations_query = f"DELETE FROM game_locations WHERE gid={game_id}"
+    rows = delete_query(locations_query, cursor=cursor)
+    game_query = f"DELETE FROM games WHERE id={game_id}"
+    rows = delete_query(game_query, cursor=cursor)
+    return str(rows)
 
 
 @app.route('/user_country')
 def users_countries():
     uid = request.args.get('uid')
     country_range = request.args.get('range')
+    fail = {"result": False, "data": "Database Connection lost"}
     if not uid:
-        return json.dumps(None)
+        return json.dumps(fail)
     if country_range:
         country_range = country_range.split(",")
         start_range, end_range = int(country_range[0]), int(country_range[1])
-        min_range, max_range = min(start_range, end_range), max(start_range, end_range)
+        min_range, max_range = min(start_range, end_range),  max(start_range, end_range)
     else:
         min_range, max_range = 0, 50
-
+    ret = {"count": None, "locations": None}
     try:
         cursor = db.cursor()
         is_admin = check_if_admin(uid, cursor)
@@ -343,26 +344,32 @@ def users_countries():
             query = f"SELECT location FROM locations WHERE id BETWEEN {min_range} AND {max_range};"
         else:
             max_id = count_records(table="user_locations", where=f"uid={uid}")
+            if max_id < 0:
+                return json.dumps(fail)
+
             if max_id < min_range:
                 max_range = max_id
                 min_range = 0
             query = f"SELECT location FROM locations WHERE id IN (SELECT location FROM user_locations WHERE uid={uid}) " \
                     f"LIMIT {min_range}, {max_range};"
+        ret["count"] = max_id
         print(query)
         rows = cursor.execute(query)
         records = cursor.fetchall()
         if records:
             places = [x[0] for x in records if x[0] != '']
-            return ",".join(places)
+            locations = ",".join(places)
+            ret["locations"] = locations
+        return ret
     except Exception as e:
         print(e)
         pass
-    return json.dumps(None)
+    return json.dumps(fail)
 
 
 @app.route('/savegame', methods=['POST'])
 def save_game():
-    parameters, cursor = GAME_PARAMETERS, db.cursor()
+    parameters,  cursor = GAME_PARAMETERS, db.cursor()
     args = request.form
 
     curr_location, countries, letters, strikes, score, user, hints = \
@@ -388,40 +395,40 @@ def save_game():
         game_id = game_record[0]
     if not game_exists:
         game_query = f"INSERT INTO games (uid, current_score, strikes, hints, current_location) VALUES " \
-                     f"({user}, {score}, {strikes}, {hints}, {curr_location});"
+                f"({user}, {score}, {strikes}, {hints}, {curr_location});"
+        insert_rows = insert_query(query=game_query, cursor=cursor)
     else:
         game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}" \
-                     f"current_location = {curr_location} WHERE uid={user};"
+                f"current_location = {curr_location} WHERE uid={user};"
+        update_rows = update_query(query=game_query, cursor=cursor)
         update_hints(uid=user, amount=hints, relative_amount=True)
-        delete_query = f"DELETE FROM game_letter WHERE gid={game_id};"
-        cursor.execute(delete_query)
-        db.commit()
-
-    cursor.execute(game_query)
-    db.commit()
+        delete_letters = f"DELETE FROM game_letter WHERE gid={game_id};"
+        rows = delete_query(delete_letters, cursor=cursor)
     if not game_exists:
         cursor.execute(get_query)
         game_record = cursor.fetchone()
         game_id = game_record[0]
-
     # insert letters and locations
     letters_arr, locations = letters.split(","), countries.split(",")
     letters_arr = [(game_id, letter) for letter in letters_arr]
     try:
         if len(letters_arr) > 0:
             query = "INSERT INTO game_letter (gid, letter) VALUES (%s, %s);"
-            cursor.executemany(query, letters_arr)
+            insert_query(query=query, execmany=letters_arr, cursor=cursor)
+            # cursor.executemany(query, letters_arr)
         if len(locations) > 0:
             locations_idx = countries_to_ids(locations)
             locations = [(game_id, location) for location in locations_idx if location is not None]
             query = "INSERT INTO game_locations (gid, location) VALUES (%s, %s);"
-            cursor.executemany(query, locations)
+            # cursor.executemany(query, locations)
+            insert_query(query=query, execmany=locations, cursor=cursor)
             user_locations = filter_countries(locations_idx, user)
             if len(user_locations) > 0:
                 query = f"INSERT INTO user_locations (uid, location) VALUES (%s, %s)"
                 locations = [(user, location) for location in user_locations if location is not None]
-                cursor.executemany(query, locations)
-        db.commit()
+                insert_query(query=query, execmany=locations, cursor=cursor)
+                # cursor.executemany(query, locations)
+        # db.commit()
     except Exception as e:
         print(e)
         return DatabaseError(e)
@@ -455,8 +462,9 @@ def update_user():
             return str(ret_val)
         try:
             cursor = db.cursor()
-            ret_val = cursor.execute(query)
-            db.commit()
+            update_query(query=query, cursor=cursor)
+            # ret_val = cursor.execute(query)
+            # db.commit()
         except Exception as e:
             print(e)
             pass
@@ -475,17 +483,27 @@ def update_user():
             return DatabaseError(e)
 
 
+@app.route('/get_genres')
+def get_all_genres():
+    query = "SELECT genre FROM genres"
+    records = select_query(query=query, is_many=True)
+    if records:
+        records = [x[0] for x in records]
+    return json.dumps(records)
+
+
 @app.route('/add_person', methods=['POST'])
 def add_person():
-    # problem - are there places in the db insert where we have places with people who didnt died,
-    # and that's why their removed in the loading?
-    arg = request.form
-    name, gender, bornin, diedin = arg("name"), arg("gender"), arg("bornin"), arg("diedin")
-    movie, genres, job = arg("movie"), arg("genres"), arg("job")
+    arg = request.json
+    keys = arg.keys()
+    name = arg["name"] if "name" in keys else ''
+    if name == '':
+        return "-1"
+    bornin = arg['bornin'] if 'bornin' in keys else None
+    diedin = arg['diedin'] if 'diedin' in keys else None
+    gender = arg['gender'] if 'gender' in keys else 'f'
     if not (bornin or diedin):
-        return "No Location!"
-    if not gender:
-        gender = 'f'
+        return "-1"
     # insert to people_info
     born = add_location(bornin) if bornin else "NULL"
     died = add_location(diedin) if bornin else "NULL"
@@ -506,13 +524,16 @@ def add_person():
     except Exception as e:
         return DatabaseError(e)
     # no movie to add, se we're done
-    if not movie:
+    movie = arg["movie"] if "movie" in keys else ''
+    if movie == '':
         return str(pid)
+    job = arg["job"] if "job" in keys else '0'
+    genres = arg["genres"] if "genres" in keys else ''
     # add movie
     movie_query = f"INSERT INTO movies (movieName) VALUES ('{movie}')"
     rows = insert_query(query=movie_query, cursor=cursor)
     if rows < 1:
-        return "Failed inserting movie"
+        return "-1"
     movie_id = cursor.lastrowid
     # add person movie
     if not job:
@@ -523,24 +544,23 @@ def add_person():
     # if movie has no genres, return person's id
     if not genres:
         return str(pid)
+    if len(genres) <=0:
+        return str(pid)
     # add genres
-    # need to decide how to get them
-    return ""
-
-
-@app.route('/tryme')
-def tryme():
-    query = 'INSERT INTO games (current_score, strikes, hints) VALUES (222, 3, 2)'
-    cursor = db.cursor()
-    rows = insert_query(query=query, cursor=cursor)
-    idd = cursor.lastrowid
-    print(idd)
-    return str(idd)
+    # genres = [genres list]
+    genres_str = ", ".join([f"'{g}'" for g in genres])
+    query = f"SELECT id FROM genres WHERE genre IN ({genres_str});"
+    genres_ids = select_query(query=query, cursor=cursor, is_many=True)
+    if genres_ids:
+        genres_values = [(movie_id, g) for g in genres_ids]
+        insert = f"INSERT INTO movies_genres (movieId, genreId) VALUES (%s, %s)"
+        rows = insert_query(insert, cursor=cursor, execmany=genres_values)
+    return str(pid)
 
 
 @app.route('/')
 def index():
-    return "Welcome to the server"
+    return redirect(url_for('static', filename='index.html'))
 
 
 app.run(debug=True, port=PORT)

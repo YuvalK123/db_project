@@ -1,4 +1,4 @@
 mysql_host: 'localhost'
 mysql_user: 'root'
-mysql_password: "1q2w3E4R"
+mysql_password: ""
 mysql_db: 'globalinfoapp'

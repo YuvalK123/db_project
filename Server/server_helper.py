@@ -120,13 +120,14 @@ def countries_to_ids(countries):
     return idx
 
 
-def country_to_id(country=None):
+def country_to_id(country=None, cursor=None):
     if not country:
         return None
     query = f"SELECT id FROM locations WHERE Location='{country}';"
     print(query)
     try:
-        cursor = db.cursor()
+        if not cursor:
+            cursor = db.cursor()
         cursor.execute(query)
         record = cursor.fetchone()
         return record[0]
@@ -265,6 +266,18 @@ def insert_query(query=None, table=None, fields=None, execmany=None, cursor=None
     return rows
 
 
+def delete_query(query, cursor=None, to_commit=True):
+    try:
+        if not cursor:
+            cursor = db.cursor()
+        rows = cursor.execute(query)
+        if to_commit:
+            db.commit()
+    except Exception as e:
+        return -1
+    return rows
+
+
 def select_query(query, cursor=None, is_many=True):
     """
     :param query: any select query
@@ -314,7 +327,7 @@ def count_records(table: str, cursor=None, where=None):
         return rows
     except Exception as e:
         print(e)
-    return 0
+    return -1
 
 
 def add_location(location: str):

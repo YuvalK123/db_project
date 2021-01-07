@@ -5,7 +5,7 @@ import yaml
 from flask_cors import CORS
 import json
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__, static_folder='../ClientSide', template_folder='../ClientSide')
 CORS(app)
 PORT = 3000
 GAME_PARAMETERS = {"score": "score", "letters": "letters", "countries": "countries", "curr_country": "country",
