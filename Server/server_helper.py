@@ -326,7 +326,7 @@ def count_records(table: str, cursor=None, where=None):
         return rows
     except Exception as e:
         print(e)
-    return 0
+    return -1
 
 
 def add_location(location: str):

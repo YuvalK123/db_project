@@ -325,15 +325,16 @@ def delete_game():
 def users_countries():
     uid = request.args.get('uid')
     country_range = request.args.get('range')
+    fail = {"result": False, "data": "Database Connection lost"}
     if not uid:
-        return json.dumps(None)
+        return json.dumps(fail)
     if country_range:
         country_range = country_range.split(",")
         start_range, end_range = int(country_range[0]), int(country_range[1])
         min_range, max_range = min(start_range, end_range),  max(start_range, end_range)
     else:
         min_range, max_range = 0, 50
-
+    ret = {"count": None, "locations": None}
     try:
         cursor = db.cursor()
         is_admin = check_if_admin(uid, cursor)
@@ -343,6 +344,9 @@ def users_countries():
             query = f"SELECT location FROM locations WHERE id BETWEEN {min_range} AND {max_range};"
         else:
             max_id = count_records(table="user_locations", where=f"uid={uid}")
+            if max_id < 0:
+                return json.dumps(fail)
+            ret["count"] = max_id
             if max_id < min_range:
                 max_range = max_id
                 min_range = 0
@@ -353,11 +357,13 @@ def users_countries():
         records = cursor.fetchall()
         if records:
             places = [x[0] for x in records if x[0] != '']
-            return ",".join(places)
+            locations = ",".join(places)
+            ret["locations"] = locations
+        return ret
     except Exception as e:
         print(e)
         pass
-    return json.dumps(None)
+    return json.dumps(fail)
 
 
 @app.route('/savegame', methods=['POST'])
