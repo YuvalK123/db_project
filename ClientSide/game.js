@@ -50,11 +50,10 @@ $(document).ready(()=>{
                     $("#hintsCountInfo").html(hintsLeft)
                     $("#Mis").html(oldGame.strikes);
                     mistakes = oldGame.strikes
-                    getHints(false)
                     points = oldGame.score
                     $("#points").html("Points: "+oldGame.score);
                     if(!oldGame.curr_country){
-                        getNewWord();
+                        getNewWord(false);
                     }
                     else{
                         if(oldGame.letters){
@@ -71,6 +70,7 @@ $(document).ready(()=>{
                         word = wordOrg.toLowerCase();
                         wLen = word.length
                         hiddenWord = new Array(wLen);
+                        getHints(false)
                         for(var i=0;i<wLen;i++){
                             if(oldGame.letters.includes(word[i])){
                                 hiddenWord[i]=[word[i],word[i]];
@@ -122,7 +122,7 @@ $(document).ready(()=>{
         $("#hintsCountInfo").html(hintsLeft)
         $("#Mis").html(mistakes);
         $("#points").html("Points: "+points)
-        getNewWord();
+        getNewWord(true);
     }
 
     function getHints(isNew){
@@ -138,6 +138,7 @@ $(document).ready(()=>{
             contentType: "application/json; charset=utf-8",
             url: "http://"+url+":"+port+'/hint?country='+wordOrg+'&user='+uid+'&new='+newVal,
             success: function (data) {
+                data = JSON.parse(data)
                 hints = data;
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -146,7 +147,7 @@ $(document).ready(()=>{
         });
     }
 
-    function getNewWord(){
+    function getNewWord(isNew){
         $.ajax({ 
             type: 'GET', 
             contentType: "application/json; charset=utf-8",
@@ -154,14 +155,14 @@ $(document).ready(()=>{
             success: function (data) {
                 var english = /^[A-Za-z0-9]*$/;
                 if (!english.test(data) ) {
-                    getNewWord();
+                    getNewWord(isNew);
                     return;
                 }
                 wordOrg = data;
                 word = wordOrg.toLowerCase();
                 wLen = word.length
                 hiddenWord = new Array(wLen);
-                getHints(true)
+                getHints(isNew)
                 for(var i=0;i<wLen;i++){
                     hiddenWord[i]=["_",word[i]];
                 }
@@ -317,7 +318,8 @@ $(document).ready(()=>{
           hintsLeft--;
           usedHints--;
           $("#hintsCountInfo").html(hintsLeft)
-           alert(hints[hintsindex++])
+           alert(hints[hintsindex%hints.length])
+           hintsindex++
       }
       else{
         alert("No More Hints Left!");
