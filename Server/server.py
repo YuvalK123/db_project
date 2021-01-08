@@ -95,21 +95,27 @@ def get_gender_statistics():
         print(e)
         return DatabaseError(e)
 
-
 @app.route('/hint')
 def server_hints():
     country, user = request.args.get('country'), request.args.get('user')
+    is_new = request.args.get("new")
+    fail = {"result": False, "data": "Database Connection lost"}
     if not (user or country):
-        return "invalid input"
+        fail["data"] = "invalid input"
+        return fail
     try:
         cursor = db.cursor()
     except Exception as e:
         return DatabaseError(e)
-    hints_query = f"SELECT hints FROM games WHERE uid={user}"
-    hints = select_query(query=hints_query, is_many=False, cursor=cursor)
-    if not hints:
-        return "No Available Hint"
-    amount = hints[0]
+    if not not is_new:
+        hints_query = f"SELECT hints FROM games WHERE uid={user}"
+        hints = select_query(query=hints_query, is_many=False, cursor=cursor)
+        if not hints:
+            fail["data"] = "[No Available Hint]"
+            return fail
+        amount = hints[0]
+    else:
+        amount = 3
     country = country_to_id(country, cursor=cursor)
     if amount < 1:
         return "No Available Hint"
@@ -141,7 +147,7 @@ def server_hints():
             if i >= amount:
                 break
     if len(hints) == 0:
-        return "No Available Hint"
+        return json.dumps(["No Available Hint"])
     return json.dumps(hints)
 
 
@@ -283,7 +289,7 @@ def get_game():
     ret_value = {"score": None, "letters": None, "curr_country": None, "strikes": None, "gid": None, "hints": None}
     try:
         cursor = db.cursor()
-        query = f"SELECT id, current_score, strikes, hints, current_location FROM games WHERE uid={user};"
+        query = f"SELECT id, current_score, strikes, hints, current_location FROM games WHERE uid='{user}';"
         rows = cursor.execute(query)
         game_record = cursor.fetchone()
         if not game_record:
@@ -394,7 +400,7 @@ def save_game():
         game_exists = True
         game_id = game_record[0]
     if not game_exists:
-        hints = max(0,3-hints)
+        hints = max(0,3-int(hints))
         game_query = f"INSERT INTO games (uid, current_score, strikes, hints, current_location) VALUES " \
                 f"({user}, {score}, {strikes}, {hints}, {curr_location});"
         insert_rows = insert_query(query=game_query, cursor=cursor)
