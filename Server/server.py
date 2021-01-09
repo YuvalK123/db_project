@@ -438,6 +438,7 @@ def save_game():
             if len(user_locations) > 0:
                 query = f"INSERT INTO user_locations (uid, location) VALUES (%s, %s)"
                 locations = [(user, location) for location in user_locations if location is not None]
+
                 insert_query(query=query, execmany=locations, cursor=cursor)
                 # cursor.executemany(query, locations)
         # db.commit()
