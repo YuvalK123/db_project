@@ -80,6 +80,9 @@ $(document).ready(()=>{
     });
 
     $("#menu").click(()=>{
+        if (user == undefined) {
+            user = $.urlParam("user")
+        }
         window.location = "./MainMenu.html?uid="+uid+"&user="+user+"&admin="+admin
     });
 });
