@@ -223,7 +223,7 @@ $(document).ready(()=>{
                         data : {
                             'country':"0",
                             'countries':wordOrg,
-                            'letters':Array.from(letters).join(','),
+                            'letters':Array.from([]).join(','),
                             'strikes':mistakes,
                             'score':points,
                             'uid':uid,
