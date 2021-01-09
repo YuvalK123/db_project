@@ -84,7 +84,10 @@ $(document).ready(()=>{
         }  
     });
 
-    
+    $("#menu").click(()=>{
+        var admin = $.urlParam("admin")
+        window.location = "./MainMenu.html?uid="+uid+"&user="+user+"&admin="+admin
+    });
 
 });
 
