@@ -74,7 +74,7 @@ def load(db, path):
 
     cursor = db.cursor()
     # create table of countries. it is important that the file of the data will be places in the location specified.
-    cursor.execute("CREATE TABLE `rest_temp` (`name` VARCHAR(256) NULL,`city_id` VARCHAR(45) NULL,`latitude` VARCHAR(45) NULL,`longitude` VARCHAR(45) NULL,`url` VARCHAR(1000) NULL)")
+    cursor.execute("CREATE TABLE `rest_temp` (`name` VARCHAR(256) NULL,`city_id` VARCHAR(45) NULL,`latitude` FLOAT NULL,`longitude` FLOAT NULL,`url` VARCHAR(1000) NULL)")
 
 
     query = f"LOAD DATA INFILE '{path}/Datafiniti_Fast_Food_Restaurants_May19US.csv' INTO TABLE rest_temp FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\r\n' IGNORE 1 LINES;"
@@ -90,7 +90,7 @@ def load(db, path):
     db.commit()
 
     cursor = db.cursor()
-    query = f"CREATE TABLE `restaurants` (`name` VARCHAR(256) NULL,`city_id` SMALLINT UNSIGNED NULL,`latitude` VARCHAR(25) NULL,`longitude` VARCHAR(25) NULL,  `url` VARCHAR(1000) NULL,   INDEX `fk1_idx` (`city_id` ASC) VISIBLE,  CONSTRAINT `fk1`    FOREIGN KEY (`city_id`)    REFERENCES `locations` (`id`) );"
+    query = f"CREATE TABLE `restaurants` (`name` VARCHAR(256) NULL,`city_id` SMALLINT UNSIGNED NULL,`latitude` FLOAT NULL,`longitude` FLOAT NULL,  `url` VARCHAR(1000) NULL,   INDEX `fk1_idx` (`city_id` ASC) VISIBLE,  CONSTRAINT `fk1`    FOREIGN KEY (`city_id`)    REFERENCES `locations` (`id`) );"
     try:
         cursor.execute(query)
         db.commit()
