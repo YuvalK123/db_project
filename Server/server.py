@@ -226,6 +226,11 @@ def get_all_related():
 
         cursor.execute(rests_query)
         rests_country = cursor.fetchall()
+        rests_country = list(rests_country)
+        for x in range(len(rests_country)):
+            rests_country[x] = list(rests_country[x])
+            (rests_country[x])[1] = str((rests_country[x])[1])
+            (rests_country[x])[2] = str((rests_country[x])[2])
         rests_country = [":".join(x) for x in rests_country]
 
         cursor.execute(rests_count_query)
@@ -405,7 +410,7 @@ def save_game():
                 f"({user}, {score}, {strikes}, {hints}, {curr_location});"
         insert_rows = insert_query(query=game_query, cursor=cursor)
     else:
-        game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}" \
+        game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}," \
                 f"current_location = {curr_location} WHERE uid={user};"
         update_rows = update_query(query=game_query, cursor=cursor)
         update_hints(uid=user, amount=hints, relative_amount=True)

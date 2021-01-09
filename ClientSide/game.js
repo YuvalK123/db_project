@@ -426,41 +426,40 @@ function dataModelParser(data) {
     }
 
     $("#showallborn").click((ev) => {
-        if ($(ev.target).html() == "show all") {
+        if ($(ev.target).html().includes("show all")) {
             for (var k = 5; k < born.length; k++) {
-                $("#borninfo").append("<span>" + born[k] + "</span><br>");
+                $("#borninfo").append("<a target='_blank' href='/MoviesByPerson.html?person="+born[k]+"'>" + born[k] + "</a><br>");
             }
             $(ev.target).html("show less");
         }
         else {
             $("#borninfo").empty();
             for (var k = 0; k < Math.min(born.length, 5); k++) {
-                $("#borninfo").append("<span>" + born[k] + "</span><br>");
+                $("#borninfo").append("<a target='_blank' href='/MoviesByPerson.html?person="+born[k]+"'>" + born[k] + "</a><br>");
             }
             $(ev.target).html("show all");
         }
     });
 
     $("#showalldied").click((ev) => {
-        if ($(ev.target).html() == "show all") {
+        if ($(ev.target).html().includes("show all")) {
             for (var k = 5; k < died.length; k++) {
-                $("#diedinfo").append("<span>" + died[k] + "</span><br>");
+                $("#diedinfo").append("<a target='_blank' href='/MoviesByPerson.html?person="+died[k]+"'>" + died[k] + "</a><br>");  
             }
             $(ev.target).html("show less");
         }
         else {
             $("#diedinfo").empty();
             for (var k = 0; k < Math.min(died.length, 5); k++) {
-                $("#diedinfo").append("<span>" + died[k] + "</span><br>");
+                $("#diedinfo").append("<a target='_blank' href='/MoviesByPerson.html?person="+died[k]+"'>" + died[k] + "</a><br>");  
             }
             $(ev.target).html("show all");
         }
     });
 
     $("#showallrests").click((ev) => {
-        if ($(ev.target).html() == "show all") {
+        if ($(ev.target).html().includes("show all")) {
             for (var k = 5; k < rests.length; k++) {
-                rests[k] = rests[k].split(":")
                 $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps</a><br>");    
             }
             $(ev.target).html("show less");
@@ -468,7 +467,6 @@ function dataModelParser(data) {
         else {
             $("#restsinfo").empty();
             for (var k = 0; k < Math.min(rests.length, 5); k++) {
-                rests[k] = rests[k].split(":")
                 $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps</a><br>");
     
             }
