@@ -11,7 +11,7 @@ def main():
     directors_info = directors_f.readlines()
     directors_f.close()
     # adds names of the director to both lists
-    for line in directors_info:  # [actor, 'actedIn', movie]
+    for line in directors_info:
         line = line.strip('\n').split('>,<')
         if len(line) < 4 or not line[3].find('>'):
             continue
