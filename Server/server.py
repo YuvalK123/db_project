@@ -27,7 +27,6 @@ def get_best_score():
         cursor.close()
         if len(result) == 1:
             message = f"{result[0][0]} has the highest score which is {result[0][1]} since {result[0][2]}.\n"
-
             return message
         else:
             return "0 games were ended"
@@ -159,9 +158,10 @@ def server_hints():
 
 
 @app.route('/get_country')
-def get_random_country():
-    user = request.args.get(GAME_PARAMETERS["user"])
-    query = f"SELECT location FROM globalinfoapp.locations WHERE id NOT IN " \
+def get_random_country(user=None):
+    if not user:
+        user = request.args.get(GAME_PARAMETERS["user"])
+    query = f"SELECT location FROM locations WHERE id NOT IN " \
             f"(SELECT location FROM game_locations WHERE gid=(SELECT id FROM games WHERE uid={user} LIMIT 1)) " \
             f"ORDER BY RAND() LIMIT 1;"
     # query = "SELECT location FROM locations ORDER BY RAND() LIMIT 1"
@@ -318,8 +318,9 @@ def get_game():
 
 
 @app.route('/gameover')
-def delete_game():
-    game_id = request.args.get(GAME_PARAMETERS["game"])
+def delete_game(game_id=None):
+    if not game_id:
+        game_id = request.args.get(GAME_PARAMETERS["game"])
     try:
         cursor = db.cursor()
     except Exception as e:
@@ -377,6 +378,21 @@ def users_countries():
         print(e)
         pass
     return json.dumps(fail)
+
+
+@app.route('/newgame')
+def new_game():
+    uid = request.args.get("uid")
+    fail = {"result": False, "data": "Invalid Input"}
+    if not uid:
+        return json.dumps(fail)
+    query = f"SELECT id FROM games WHERE uid={uid}"
+    gid = select_query(query, is_many=False)
+    if gid:
+        delete_game(gid[0])
+    country = get_random_country(uid)
+    print(country)
+    return country
 
 
 @app.route('/savegame', methods=['POST'])
@@ -469,6 +485,7 @@ def update_user():
     """
     requires uid, and username to change username, pass to change password
     """
+    global db
     if request.method == 'POST':
         username, psw, uid = request.args.get("username"), request.args.get("pass"), request.args.get("uid")
         ret_val = -1
@@ -481,7 +498,7 @@ def update_user():
         else:
             return str(ret_val)
         try:
-            global db
+
             cursor = db.cursor()
             ret_val = update_query(query=query, cursor=cursor)
             # ret_val = cursor.execute(query)
