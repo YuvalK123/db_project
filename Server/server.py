@@ -4,14 +4,12 @@ from server_helper import *
 @app.route('/bestScores')
 def get_best_scores():
     try:
-        db = mysql.connect()
         cursor = db.cursor()
         query_best_10_scores = "SELECT users.username, score_history.score, score_history.datetime FROM " \
                                "score_history, users WHERE score_history.uid=users.id ORDER BY score DESC LIMIT 10;"
         cursor.execute(query_best_10_scores)
         result = cursor.fetchall()
         cursor.close()
-        db.close()
         return json.dumps(result, default=datetime_tostring)
     except Exception as e:
         print(e)
@@ -20,7 +18,6 @@ def get_best_scores():
 @app.route('/admin/best_score')
 def get_best_score():
     try:
-        db = mysql.connect()
         cursor = db.cursor()
         best_score_query = "SELECT username, score, datetime FROM users, (SELECT uid, MAX(score) AS " \
                            "score, datetime FROM score_history) AS best_score WHERE users.id = " \
@@ -28,7 +25,6 @@ def get_best_score():
         cursor.execute(best_score_query)
         result = cursor.fetchall()
         cursor.close()
-        db.close()
         if len(result) == 1:
             message = f"{result[0][0]} has the highest score which is {result[0][1]} since {result[0][2]}.\n"
 
@@ -43,14 +39,12 @@ def get_best_score():
 @app.route('/admin/quantity_of_gamers')
 def get_number_of_gamers():
     try:
-        db = mysql.connect()
         cursor = db.cursor()
         num_gamers_query = "SELECT COUNT(*) FROM ((SELECT uid FROM games) UNION (SELECT uid FROM " \
                            "score_history)) AS all_gamers;"
         cursor.execute(num_gamers_query)
         result = cursor.fetchone()
         cursor.close()
-        db.close()
         message = f"Number of people playing by far: {result[0]}\n"
 
         return message
@@ -62,7 +56,6 @@ def get_number_of_gamers():
 @app.route('/admin/age_statistics')
 def get_age_statistics():
     try:
-        db = mysql.connect()
         query_avg_score_according_to_ages = "SELECT AVG(score) FROM score_history, users WHERE users.id = " \
                                             "score_history.uid AND users.age BETWEEN %s AND %s;"
         cursor = db.cursor()
@@ -81,7 +74,6 @@ def get_age_statistics():
         message = f"Average score for ages 0-25: {avg_score_young}\nAverage score for ages 26-55: " \
                   f"{avg_score_adults}\nAverage score for ages 56-99: {avg_score_elders}\n"
         cursor.close()
-        db.close()
         return message
     except Exception as e:
         print(e)
@@ -92,8 +84,8 @@ def get_age_statistics():
 def get_gender_statistics():
     try:
         db = mysql.connect()
-        query_gender_score_sum = "SELECT SUM(score) FROM users, score_history WHERE users.id = score_history.uid AND " \
-                                 "users.gender = %s;"
+        query_gender_score_sum = "SELECT SUM(score) FROM users, score_history WHERE users.id = score_history.uid " \
+                                 "AND users.gender = %s;"
         cursor = db.cursor()
         cursor.execute(query_gender_score_sum, ('m', ))
         male_sum = cursor.fetchall()[0][0]
@@ -103,7 +95,6 @@ def get_gender_statistics():
         female_sum = 0 if female_sum is None else female_sum
         message = f"Cumulative score for males: {male_sum}\nCumulative score for females: {female_sum}\n"
         cursor.close()
-        db.close()
         return message
     except Exception as e:
         print(e)
@@ -120,7 +111,6 @@ def server_hints():
         fail["data"] = "invalid input"
         return fail
     try:
-        db = mysql.connect()
         cursor = db.cursor()
     except Exception as e:
         return DatabaseError(e)
@@ -138,7 +128,6 @@ def server_hints():
         return "No Available Hint"
     # query, keyword = get_from_option(option, country)
     hints_list = get_hints(country, amount, cursor=cursor)
-    print(hints_list)
     hints = []
     born_count, died_count, rests_count = len(hints_list["born"]), len(hints_list["died"]), \
                                             len(hints_list["rests"])
@@ -178,7 +167,6 @@ def get_random_country():
             f"ORDER BY RAND() LIMIT 1;"
     # query = "SELECT location FROM locations ORDER BY RAND() LIMIT 1"
     try:
-        db = mysql.connect()
         cursor = db.cursor()
         cursor.execute(query)
         country = cursor.fetchone()
@@ -197,7 +185,6 @@ def get_person_movies():
     if not person:
         return json.dumps(None)
     try:
-        db = mysql.connect()
         cursor = db.cursor()
         query = f"SELECT id, gender FROM people_info WHERE Name='{person}' LIMIT 1"
         cursor.execute(query)
@@ -238,9 +225,7 @@ def get_all_related():
     rests_count_query = f"SELECT COUNT(name) FROM restaurants WHERE city_id=" \
                         f"(SELECT id FROM locations WHERE location='{country}');"
     try:
-        db = mysql.connect()
         cursor = db.cursor()
-        # print("cursor1", cursor)
         cursor.execute(born_query)
         born_country = cursor.fetchall()
         born_country = [x[0] for x in born_country]
@@ -275,7 +260,6 @@ def users():
     username, psw = request.args.get('user'), request.args.get('pass')
     uid, is_admin = -1, False
     try:
-        db = mysql.connect()
         cursor = db.cursor()
     except Exception as e:
         return DatabaseError(e)
@@ -287,7 +271,7 @@ def users():
             age = "1970-01-01"
         query = f"INSERT INTO users (username, password, age, gender) VALUES " \
                      f"('{username}', '{psw}', '{age}', '{gender}');"
-        insert_query(db=db, query=query, cursor=cursor)
+        insert_query(query=query, cursor=cursor)
         query = f"SELECT id FROM users WHERE (username='{username}' AND password='{psw}') LIMIT 1;"
         cursor.execute(query)
         record = cursor.fetchone()
@@ -315,7 +299,6 @@ def get_game():
     user = request.args.get(GAME_PARAMETERS["user"])
     ret_value = {"score": None, "letters": None, "curr_country": None, "strikes": None, "gid": None, "hints": None}
     try:
-        db = mysql.connect()
         cursor = db.cursor()
         query = f"SELECT id, current_score, strikes, hints, current_location FROM games WHERE uid='{user}';"
         rows = cursor.execute(query)
@@ -342,17 +325,16 @@ def get_game():
 def delete_game():
     game_id = request.args.get(GAME_PARAMETERS["game"])
     try:
-        db = mysql.connect()
         cursor = db.cursor()
     except Exception as e:
         print(e)
         return DatabaseError(e)
     rows = letters_query = f"DELETE FROM game_letter WHERE gid={game_id}"
-    delete_query(query=letters_query, db=db, cursor=cursor, to_commit=False)
+    delete_query(query=letters_query, cursor=cursor, to_commit=False)
     locations_query = f"DELETE FROM game_locations WHERE gid={game_id}"
-    rows = delete_query(query=locations_query, db=db, cursor=cursor)
+    rows = delete_query(query=locations_query, cursor=cursor)
     game_query = f"DELETE FROM games WHERE id={game_id}"
-    rows = delete_query(query=game_query, db=db, cursor=cursor)
+    rows = delete_query(query=game_query, cursor=cursor)
     return str(rows)
 
 
@@ -371,7 +353,6 @@ def users_countries():
         min_range, max_range = 0, 50
     ret = {"count": None, "locations": None}
     try:
-        db = mysql.connect()
         cursor = db.cursor()
         is_admin = check_if_admin(uid, cursor=cursor)
         if is_admin:
@@ -406,7 +387,6 @@ def users_countries():
 @app.route('/savegame', methods=['POST'])
 def save_game():
     try:
-        db = mysql.connect()
         cursor = db.cursor()
     except Exception as e:
         return DatabaseError(e)
@@ -437,14 +417,14 @@ def save_game():
         hints = max(0,3-int(hints))
         game_query = f"INSERT INTO games (uid, current_score, strikes, hints, current_location) VALUES " \
                 f"({user}, {score}, {strikes}, {hints}, {curr_location});"
-        insert_rows = insert_query(db=db, query=game_query, cursor=cursor)
+        insert_rows = insert_query(query=game_query, cursor=cursor)
     else:
         game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}," \
                 f"current_location = {curr_location} WHERE uid={user};"
-        update_rows = update_query(query=game_query, db=db, cursor=cursor)
-        update_hints(db=db, uid=user, amount=hints, relative_amount=True, cursor=cursor)
+        update_rows = update_query(query=game_query, cursor=cursor)
+        update_hints(uid=user, amount=hints, relative_amount=True, cursor=cursor)
         delete_letters = f"DELETE FROM game_letter WHERE gid={game_id};"
-        rows = delete_query(query=delete_letters, db=db, cursor=cursor)
+        rows = delete_query(query=delete_letters, cursor=cursor)
     if not game_exists:
         cursor.execute(get_query)
         game_record = cursor.fetchone()
@@ -457,21 +437,21 @@ def save_game():
     try:
         if len(letters_arr) > 0:
             query = "INSERT INTO game_letter (gid, letter) VALUES (%s, %s);"
-            insert_query(db=db, query=query, execmany=letters_arr, cursor=cursor)
+            insert_query(query=query, execmany=letters_arr, cursor=cursor)
             # cursor.executemany(query, letters_arr)
         if len(locations) > 0:
             locations_idx = countries_to_ids(locations, cursor=cursor)
             locations = [(game_id, location) for location in locations_idx if location is not None]
             query = "INSERT INTO game_locations (gid, location) VALUES (%s, %s);"
             # cursor.executemany(query, locations)
-            insert_query(db=db, query=query, execmany=locations, cursor=cursor)
+            insert_query(query=query, execmany=locations, cursor=cursor)
             is_admin = check_if_admin(user, cursor=cursor)
             if not is_admin:
                 user_locations = filter_countries(locations_idx, user, cursor=cursor)
                 if len(user_locations) > 0:
                     query = f"INSERT INTO user_locations (uid, location) VALUES (%s, %s)"
                     locations = [(user, location) for location in user_locations if location is not None]
-                    insert_query(db=db, query=query, execmany=locations, cursor=cursor)
+                    insert_query(query=query, execmany=locations, cursor=cursor)
                 # cursor.executemany(query, locations)
         # db.commit()
     except Exception as e:
@@ -485,12 +465,7 @@ def use_hint():
     uid, hints = request.args.get("user"), request.args.get("hints")
     if not hints:
         hints = -1
-    try:
-        db = mysql.connect()
-        cursor = db.cursor()
-    except Exception as e:
-        return DatabaseError(e)
-    t = update_hints(db=db, uid=uid, amount=hints, relative_amount=True, cursor=cursor)
+    t = update_hints(uid=uid, amount=hints, relative_amount=True)
     return str(t)
 
 
@@ -511,9 +486,9 @@ def update_user():
         else:
             return str(ret_val)
         try:
-            db = mysql.connect()
+            global db
             cursor = db.cursor()
-            ret_val = update_query(db=db, query=query, cursor=cursor)
+            ret_val = update_query(query=query, cursor=cursor)
             # ret_val = cursor.execute(query)
             # db.commit()
         except Exception as e:
@@ -538,12 +513,7 @@ def update_user():
 @app.route('/get_genres')
 def get_all_genres():
     query = "SELECT genre FROM genres"
-    try:
-        db = mysql.connect()
-        cursor = db.cursor()
-    except Exception as e:
-        return DatabaseError(e)
-    records = select_query(query=query, is_many=True, cursor=cursor)
+    records = select_query(query=query, is_many=True)
     if records:
         records = [x[0] for x in records]
     return json.dumps(records)
@@ -554,7 +524,6 @@ def add_person():
     arg = request.json
     keys = arg.keys()
     try:
-        db = mysql.connect()
         cursor = db.cursor()
     except Exception as e:
         print("problem connecting", e)
@@ -571,8 +540,8 @@ def add_person():
         if not (bornin or diedin):
             return "-1"
         # insert to people_info
-        born = add_location(bornin, db=db) if bornin else "NULL"
-        died = add_location(diedin, db=db) if bornin else "NULL"
+        born = add_location(bornin, cursor=cursor) if bornin else "NULL"
+        died = add_location(diedin, cursor=cursor) if bornin else "NULL"
         if bornin and diedin:
             person_query = f"INSERT INTO people_info (name, gender, BornIn, DiedIn) VALUES ('{name}', '{gender}', " \
                            f"{born}, {died});"
@@ -584,7 +553,7 @@ def add_person():
                            f"{died});"
         pid = -1
         try:
-            rows = insert_query(db=db, query=person_query, cursor=cursor)
+            rows = insert_query(query=person_query, cursor=cursor)
             pid = cursor.lastrowid
         except Exception as e:
             return DatabaseError(e)
@@ -598,7 +567,7 @@ def add_person():
     genres = arg["genres"] if "genres" in keys else ''
     # add movie
     movie_query = f"INSERT INTO movies (movieName) VALUES ('{movie}')"
-    rows = insert_query(db=db, query=movie_query, cursor=cursor)
+    rows = insert_query(query=movie_query, cursor=cursor)
     if rows < 1:
         return "-1"
     movie_id = cursor.lastrowid
@@ -607,7 +576,7 @@ def add_person():
         job = '0'  # actor by default
     if movie_id > 0:
         query = f"INSERT INTO people_movies (pid, movieId, job_id) VALUES ({pid}, {movie_id}, {job});"
-        rows = insert_query(db=db, query=query, cursor=cursor)
+        rows = insert_query(query=query, cursor=cursor)
     # if movie has no genres, return person's id
     if not genres:
         return str(pid)
@@ -621,7 +590,7 @@ def add_person():
     if genres_ids:
         genres_values = [(movie_id, g) for g in genres_ids]
         insert = f"INSERT INTO movies_genres (movieId, genreId) VALUES (%s, %s)"
-        rows = insert_query(query=insert, db=db, cursor=cursor, execmany=genres_values)
+        rows = insert_query(query=insert, cursor=cursor, execmany=genres_values)
     return str(pid)
 
 
@@ -630,4 +599,4 @@ def index():
     return redirect(url_for('static', filename='index.html'))
 
 
-app.run(debug=True, port=PORT)
+app.run(debug=True, port=PORT, threaded=True)

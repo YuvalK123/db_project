@@ -20,4 +20,4 @@ app.config['MYSQL_DATABASE_USER'] = db_params['mysql_user']
 app.config['MYSQL_DATABASE_PASSWORD'] = db_params['mysql_password']
 app.config['MYSQL_DATABASE_DB'] = db_params['mysql_db']
 mysql.init_app(app)
-# db = mysql.connect()
+db = mysql.connect()
