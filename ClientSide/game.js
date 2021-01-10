@@ -148,10 +148,17 @@ $(document).ready(()=>{
     }
 
     function getNewWord(isNew){
+        let addition;
+        if(isNew == true){
+            addition = "newgame"
+        }
+        else{
+            addition = "get_country"
+        }
         $.ajax({ 
             type: 'GET', 
             contentType: "application/json; charset=utf-8",
-            url: "http://"+url+":"+port+'/get_country?uid='+uid, 
+            url: "http://"+url+":"+port+'/'+addition+'?uid='+uid,
             success: function (data) {
                 var english = /^[A-Za-z0-9]*$/;
                 if (!english.test(data) ) {
@@ -399,8 +406,10 @@ function dataModelParser(data) {
     info.rests = info.rests ? info.rests : "";
     rests = info.rests.split(",");
     if (info.rests.length > 0) {
-        for (var k = 0; k < Math.min(rests.length, 5); k++) {
+        for (var k = 0; k < rests.length; k++) {
             rests[k] = rests[k].split(":")
+        }
+        for (var k = 0; k < Math.min(rests.length, 5); k++) {
             $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps</a><br>");
         }
     }
