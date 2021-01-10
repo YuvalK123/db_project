@@ -69,10 +69,7 @@ def movies_record_to_list(movies_idx, cursor=None):
     acted_query = f"SELECT DISTINCT movies.movieName, genres.genre FROM movies, movies_genres, genres " \
                   f"WHERE movies.id = movies_genres.movieId AND movies_genres.genreId = genres.id and " \
                   f"movies.id IN ({movies}) ORDER BY movies.id;"
-    cursor.execute(acted_query)
     records = select_query(acted_query, cursor=cursor, is_many=True)
-    # record = cursor.fetchall()
-    # print(d_record)
     if not records:
         return []
     dic = {}

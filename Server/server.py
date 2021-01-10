@@ -199,15 +199,12 @@ def get_person_movies():
         if not record:
             return json.dumps(None)
         actor_id, directors_id = "00", "01"
-        # print(record)
         actor_movies = tuple((x[0]) for x in record if actor_id in str(x[1]))
         director_movies = tuple(str(x[0]) for x in record if directors_id in str(x[1]))
-        a_record, d_record = None, None
         if len(actor_movies) > 0:
-            ret["actedIn"] = movies_record_to_list(cursor, actor_movies)
+            ret["actedIn"] = movies_record_to_list(movies_idx=actor_movies, cursor=cursor)
         if len(director_movies) > 0:
-            ret["directed"] = movies_record_to_list(cursor, director_movies)
-        print(ret)
+            ret["directed"] = movies_record_to_list(movies_idx=director_movies, cursor=cursor)
     except Exception as e:
         print(e)
         return DatabaseError(e)
@@ -370,7 +367,6 @@ def users_countries():
             query = f"SELECT location FROM locations WHERE id IN (SELECT location FROM user_locations WHERE uid={uid}) " \
                     f"LIMIT {min_range}, {max_range};"
         ret["count"] = max_id
-        print(query)
         rows = cursor.execute(query)
         records = cursor.fetchall()
         if records:
@@ -598,4 +594,4 @@ def index():
     return redirect(url_for('static', filename='index.html'))
 
 
-app.run(debug=True, port=PORT, threaded=True)
+app.run(debug=True, port=PORT, threaded=False)
