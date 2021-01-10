@@ -95,7 +95,6 @@ def get_gender_statistics():
         message = f"Cumulative score for males: {male_sum}\nCumulative score for females: {female_sum}\n"
         cursor.close()
         return message
-        return message
     except Exception as e:
         print(e)
         return DatabaseError(e)
