@@ -271,6 +271,7 @@ $(document).ready(()=>{
         $("#next").hide();
         alert("Wrong letter! " + (--mistakes) +" mistaked left");
         $("#Mis").html(mistakes);
+        $("#save").trigger("click");
         if(mistakes <= 0){
             if(gid){
                 $.ajax({ 
@@ -327,6 +328,7 @@ $(document).ready(()=>{
           $("#hintsCountInfo").html(hintsLeft)
            alert(hints[hintsindex%hints.length])
            hintsindex++
+          $("#save").trigger("click");
       }
       else{
         alert("No More Hints Left!");
@@ -351,9 +353,7 @@ $(document).ready(()=>{
         url: "http://"+url+":"+port+"/savegame", 
         success: function (data) {
             gid = data;
-            alert("Game Saved!");
             usedHints = 0;
-
         },
         error: function(XMLHttpRequest, textStatus, errorThrown) {
 
