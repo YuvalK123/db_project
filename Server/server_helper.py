@@ -141,6 +141,7 @@ def filter_countries(countries_idx, uid, cursor=None, table="user_locations"):
     """
     :param countries_idx: union of countries indices
     :param uid: user id.
+    :param cursor: db cursor
     :param table: table with location and uid field
     :return: list of countries idx that don't exist in table
     """
@@ -149,15 +150,14 @@ def filter_countries(countries_idx, uid, cursor=None, table="user_locations"):
         if not cursor:
             cursor = db.cursor()
         rows = cursor.execute(query)
-        if not rows:
-            return []
+        # if not rows:
+        #     return []
         records = cursor.fetchall()
         if not records:
-            return []
+            return countries_idx
         idx = [x[0] for x in records]
     except Exception as e:
         print(e)
-    if not idx:
         return []
     ret = [x for x in countries_idx if x not in idx]
     return ret
