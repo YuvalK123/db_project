@@ -123,6 +123,7 @@ function dataModelParser(data) {
     info.died = info.died ? info.died : "";
     died = info.died.split(",");
     if (info.died.length > 0) {
+            $("#diedSpan").show();
         for (var k = 0; k < Math.min(died.length, 5); k++) {
             $("#diedinfo").append("<a target='_blank' href='/ClientSide/MoviesByPerson.html?person="+died[k]+"'>" + died[k] + "</a><br>");  
         }
@@ -134,6 +135,7 @@ function dataModelParser(data) {
     info.rests = info.rests ? info.rests : "";
     rests = info.rests.split(",");
     if (info.rests.length > 0) {
+            $("#restsSpan").show();
         for (var k = 0; k < rests.length; k++) {
             rests[k] = rests[k].split(":")
         }

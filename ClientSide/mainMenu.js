@@ -39,7 +39,7 @@ $(document).ready(()=>{
 
 
     $("#logoutbtn").click(()=>{
-        window.location = "./"
+        window.location = "./index.html"
     });
 
     $("#scoresbtn").click(()=>{

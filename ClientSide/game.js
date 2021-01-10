@@ -335,6 +335,13 @@ $(document).ready(()=>{
       }
     });
 
+    $("#mainmenu").click(()=>{
+        var uid = $.urlParam("uid")
+        var user = $.urlParam("user")
+        var admin = $.urlParam("admin")
+        window.location = "./MainMenu.html?uid="+uid+"&user="+user+"&admin="+admin
+    });
+
 
   $("#save").click(()=>{
     $.ajax({ 
