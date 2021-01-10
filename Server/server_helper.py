@@ -28,12 +28,12 @@ def get_from_option(option, country):
     return query, keyword
 
 
-def get_hints(country, amount, cursor=None):
-    if not cursor:
-        cursor = db.cursor()
+def get_hints(country, amount, cursor):
+    # if not cursor:
+    #     cursor = db.cursor()
     queries = {"born": [], "died": [], "rests": []}
-    born_count = count_records(table="people_info", where=f"DiedIn='{country}'", cursor=cursor)
-    died_count = count_records(table="people_info", where=f"BornIn='{country}'", cursor=cursor)
+    died_count = count_records(table="people_info", where=f"DiedIn='{country}'", cursor=cursor)
+    born_count = count_records(table="people_info", where=f"BornIn='{country}'", cursor=cursor)
     if born_count:
         query = f"SELECT Name FROM people_info WHERE BornIn='{country}' ORDER BY RAND() LIMIT {amount};"
         born = select_query(query=query, is_many=True, cursor=cursor)
@@ -82,12 +82,12 @@ def movies_record_to_list(cursor, movies_idx):
     return res
 
 
-def id_to_country(country_id=None):
+def id_to_country(cursor, country_id=None):
     if not country_id:
         return None
     query = f"SELECT Location FROM locations WHERE id={country_id}"
     try:
-        cursor = db.cursor()
+        # cursor = db.cursor()
         cursor.execute(query)
         record = cursor.fetchone()
         return record[0]
@@ -96,7 +96,7 @@ def id_to_country(country_id=None):
         return None
 
 
-def countries_to_ids(countries):
+def countries_to_ids(countries, cursor):
     """
 
     :param countries: union of locations strings
@@ -108,7 +108,7 @@ def countries_to_ids(countries):
     locations = ",".join([f"'{x}'" for x in countries])
     query = f"SELECT id FROM locations WHERE location IN ({locations});"
     try:
-        cursor = db.cursor()
+        # cursor = db.cursor()
         rows = cursor.execute(query)
         if not rows:
             return []
@@ -120,14 +120,12 @@ def countries_to_ids(countries):
     return idx
 
 
-def country_to_id(country=None, cursor=None):
+def country_to_id(cursor, country=None):
     if not country:
         return None
     query = f"SELECT id FROM locations WHERE Location='{country}';"
     print(query)
     try:
-        if not cursor:
-            cursor = db.cursor()
         cursor.execute(query)
         record = cursor.fetchone()
         return record[0]
@@ -136,7 +134,7 @@ def country_to_id(country=None, cursor=None):
         return None
 
 
-def filter_countries(countries_idx, uid, table="user_locations"):
+def filter_countries(countries_idx, uid, cursor, table="user_locations"):
     """
     :param countries_idx: union of countries indices
     :param uid: user id.
@@ -145,7 +143,6 @@ def filter_countries(countries_idx, uid, table="user_locations"):
     """
     query, idx = f"SELECT location FROM {table} WHERE uid={uid}", None
     try:
-        cursor = db.cursor()
         rows = cursor.execute(query)
         if not rows:
             return []
@@ -161,40 +158,38 @@ def filter_countries(countries_idx, uid, table="user_locations"):
     return ret
 
 
-def get_user_age(uid):
-    yeardays = 365.2425
-    age = -1
-    try:
-        cursor = db.cursor()
-        query = f"SELECT age FROM users WHERE id={uid}"
-        cursor.execute(query)
-        age = cursor.fetchone()
-        if age:
-            today, age = datetime.date.today(), age[0]
-            age = (today - age).days/yeardays
-    except Exception as e:
-        print(e)
-    return str(age)
+# def get_user_age(uid):
+#     yeardays = 365.2425
+#     age = -1
+#     try:
+#         cursor = db.cursor()
+#         query = f"SELECT age FROM users WHERE id={uid}"
+#         cursor.execute(query)
+#         age = cursor.fetchone()
+#         if age:
+#             today, age = datetime.date.today(), age[0]
+#             age = (today - age).days/yeardays
+#     except Exception as e:
+#         print(e)
+#     return str(age)
 
 
-def update_hints(uid, amount, cursor=None, relative_amount=False):
+def update_hints(uid, amount, db, cursor=None, relative_amount=False):
     if relative_amount:
         amount = int(amount)
         query = f"SELECT hints FROM games WHERE uid={uid}"
-        if not cursor:
-            cursor = db.cursor()
+        # if not cursor:
+        #     cursor = db.cursor()
         rows = cursor.execute(query)
         record = cursor.fetchone()
-        print(record)
         if record:
             hints = record[0]
             amount += hints
-    print(amount)
     where = f"WHERE uid={uid}"
-    return update_query(table="games", fields={'hints': amount}, where=where, cursor=cursor)
+    return update_query(db=db, table="games", fields={'hints': amount}, where=where, cursor=cursor)
 
 
-def update_query(query=None, table=None, fields=None, where=None, cursor=None):
+def update_query(db, query=None, table=None, fields=None, where=None, cursor=None):
     """
     :param cursor: db cursor
     :param query: full query to execute
@@ -226,7 +221,7 @@ def update_query(query=None, table=None, fields=None, where=None, cursor=None):
     return rows
 
 
-def insert_query(query=None, table=None, fields=None, execmany=None, cursor=None):
+def insert_query(db, query=None, table=None, fields=None, execmany=None, cursor=None):
     """
     :param query: full query to execute
     :param table: if not query, table to update
@@ -250,7 +245,6 @@ def insert_query(query=None, table=None, fields=None, execmany=None, cursor=None
             vals = ["%s" for i in range(length)]
             query += ", ".join(vals)
         query += ");"
-    print(query)
     rows = 0
     try:
         if not cursor:
@@ -265,7 +259,7 @@ def insert_query(query=None, table=None, fields=None, execmany=None, cursor=None
     return rows
 
 
-def delete_query(query, cursor=None, to_commit=True):
+def delete_query(query, db=None, cursor=None, to_commit=True):
     try:
         if not cursor:
             cursor = db.cursor()
@@ -277,7 +271,7 @@ def delete_query(query, cursor=None, to_commit=True):
     return rows
 
 
-def select_query(query, cursor=None, is_many=True):
+def select_query(query, cursor, is_many=True):
     """
     :param query: any select query
     :param cursor: db cursor
@@ -285,8 +279,6 @@ def select_query(query, cursor=None, is_many=True):
     :return: records from select query
     """
     try:
-        if not cursor:
-            cursor = db.cursor()
         rows = cursor.execute(query)
         if not rows:
             return tuple()
@@ -300,25 +292,21 @@ def select_query(query, cursor=None, is_many=True):
     return tuple()
 
 
-def check_if_admin(uid, cursor=None):
+def check_if_admin(uid, cursor):
     query = f"SELECT * FROM admins WHERE uid={uid}"
     rows = 0
     try:
-        if not cursor:
-            cursor = db.cursor()
         rows = cursor.execute(query)
     except Exception as e:
         print(e)
     return rows != 0
 
 
-def count_records(table: str, cursor=None, where=None):
+def count_records(table: str, cursor, where=None):
     try:
         query = f"SELECT COUNT(*) FROM {table}"
         if where:
             query += " WHERE " + where
-        if not cursor:
-            cursor = db.cursor()
         cursor.execute(query)
         rows = cursor.fetchone()
         if rows:
@@ -329,14 +317,15 @@ def count_records(table: str, cursor=None, where=None):
     return -1
 
 
-def add_location(location: str):
+def add_location(location: str, db, cursor=None):
     """
 
     :param location: string name of place
     :return: id of place in db
     """
     try:
-        cursor = db.cursor()
+        if not cursor:
+            cursor = db.cursor()
     except:
         return -1
     record = select_query(query=f"SELECT id FROM locations WHERE LOWER(location)='{location.strip()}'",
@@ -344,7 +333,7 @@ def add_location(location: str):
     if record:
         return record[0]
     query = f"INSERT INTO locations (location) VALUES ('{location.strip()}');"
-    rows = insert_query(query=query, cursor=cursor)
+    rows = insert_query(query=query, cursor=cursor, db=db)
     try:
         country_id = cursor.lastrowid
     except:

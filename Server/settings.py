@@ -4,8 +4,10 @@ from flaskext.mysql import MySQL
 import yaml
 from flask_cors import CORS
 import json
+import os
 
-app = Flask(__name__, static_folder='../ClientSide', template_folder='../ClientSide')
+# clientside = os.path.realpath('../ClientSide').replace("\\", "/")
+app = Flask(__name__, static_folder='../ClientSide')
 CORS(app)
 PORT = 3000
 GAME_PARAMETERS = {"score": "score", "letters": "letters", "countries": "countries", "curr_country": "country",
@@ -18,4 +20,4 @@ app.config['MYSQL_DATABASE_USER'] = db_params['mysql_user']
 app.config['MYSQL_DATABASE_PASSWORD'] = db_params['mysql_password']
 app.config['MYSQL_DATABASE_DB'] = db_params['mysql_db']
 mysql.init_app(app)
-db = mysql.connect()
+# db = mysql.connect()
