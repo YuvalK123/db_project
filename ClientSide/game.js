@@ -50,6 +50,7 @@ $(document).ready(()=>{
                     $("#hintsCountInfo").html(hintsLeft)
                     $("#Mis").html(oldGame.strikes);
                     mistakes = oldGame.strikes
+                    drawHangman(5-mistakes)
                     points = oldGame.score
                     $("#points").html("Points: "+oldGame.score);
                     if(!oldGame.curr_country){
@@ -117,12 +118,37 @@ $(document).ready(()=>{
     }
     else{
         mistakes = 5;
+        drawHangman(5-mistakes)
         points = 0;
         hintsLeft = 3;
         $("#hintsCountInfo").html(hintsLeft)
         $("#Mis").html(mistakes);
         $("#points").html("Points: "+points)
         getNewWord(true);
+    }
+
+    function drawHangman(mistakes){
+        switch(mistakes) {
+            case 0:
+                $("#hang").attr("src","./images/0mis.png")
+                break;
+            case 1:
+                $("#hang").attr("src","./images/1mis.png")
+                break;
+            case 2:
+                $("#hang").attr("src","./images/2mis.png")
+                break;
+            case 3:
+                $("#hang").attr("src","./images/3mis.png")
+                break;
+            case 4:
+                $("#hang").attr("src","./images/4mis.png")
+                break;
+            case 5:
+                $("#hang").attr("src","./images/5mis.png")
+                break;
+          }
+    
     }
 
     function getHints(isNew){
@@ -271,6 +297,7 @@ $(document).ready(()=>{
         $("#next").hide();
         alert("Wrong letter! " + (--mistakes) +" mistaked left");
         $("#Mis").html(mistakes);
+        drawHangman(5-mistakes)
         $("#save").trigger("click");
         if(mistakes <= 0){
             if(gid){
