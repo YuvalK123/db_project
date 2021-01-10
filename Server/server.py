@@ -83,7 +83,6 @@ def get_age_statistics():
 @app.route('/admin/gender')
 def get_gender_statistics():
     try:
-        db = mysql.connect()
         query_gender_score_sum = "SELECT SUM(score) FROM users, score_history WHERE users.id = score_history.uid " \
                                  "AND users.gender = %s;"
         cursor = db.cursor()
@@ -95,6 +94,7 @@ def get_gender_statistics():
         female_sum = 0 if female_sum is None else female_sum
         message = f"Cumulative score for males: {male_sum}\nCumulative score for females: {female_sum}\n"
         cursor.close()
+        return message
         return message
     except Exception as e:
         print(e)
@@ -498,7 +498,6 @@ def update_user():
     else:
         query = f"SELECT username, password, age, gender FROM users WHERE users.id = {request.args.get('uid')};"
         try:
-            db = mysql.connect()
             cursor = db.cursor()
             cursor.execute(query)
             result = cursor.fetchall()
