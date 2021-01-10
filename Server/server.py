@@ -100,19 +100,18 @@ def get_gender_statistics():
 
 @app.route('/hint')
 def server_hints():
-    print("hint")
     country, user = request.args.get('country'), request.args.get('user')
-    print(country, user)
     is_new = request.args.get("new")
     fail = {"result": False, "data": "Database Connection lost"}
     if not (user or country):
+        print(user, country, "fail")
         fail["data"] = "invalid input"
         return fail
     try:
         cursor = db.cursor()
     except Exception as e:
         return DatabaseError(e)
-    if not not is_new:
+    if not is_new:
         hints_query = f"SELECT hints FROM games WHERE uid={user}"
         hints = select_query(query=hints_query, is_many=False, cursor=cursor)
         if not hints:
@@ -127,6 +126,7 @@ def server_hints():
     # query, keyword = get_from_option(option, country)
     hints_list = get_hints(country, amount, cursor=cursor)
     hints = []
+    print("get_hints", get_hints)
     born_count, died_count, rests_count = len(hints_list["born"]), len(hints_list["died"]), \
                                             len(hints_list["rests"])
     if born_count > 0:
