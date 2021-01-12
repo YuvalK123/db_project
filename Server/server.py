@@ -259,13 +259,18 @@ def users():
         return DatabaseError(e)
     if request.method == 'POST':
         gender, age = request.args.get('gender'), request.args.get('age')
-        if not gender:
-            gender = ''
-        if not age:
-            age = "1970-01-01"
+        # check if username exists
+        cursor.execute(f"SELECT * FROM users WHERE username = '{username}'")
+        rows_returned = len(cursor.fetchall())
+        if rows_returned == 1:
+            return json.dumps(["username already exists! please try a different one and try again!"])
+        # username does not exist
         query = f"INSERT INTO users (username, password, age, gender) VALUES " \
                      f"('{username}', '{psw}', '{age}', '{gender}');"
-        insert_query(query=query, cursor=cursor)
+        val = insert_query(query=query, cursor=cursor)
+        if val == 0:
+            return json.dumps(["Please check that your username is no longer than 20 characters and password is no "
+                               "longer than 25 characters.Then, please try again!"])
         query = f"SELECT id FROM users WHERE (username='{username}' AND password='{psw}') LIMIT 1;"
         cursor.execute(query)
         record = cursor.fetchone()

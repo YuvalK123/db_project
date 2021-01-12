@@ -259,6 +259,7 @@ def insert_query(query=None, table=None, fields=None, execmany=None, cursor=None
         db.commit()
     except Exception as e:
         print(e)
+        print(rows)
     return rows
 
 

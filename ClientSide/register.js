@@ -15,33 +15,38 @@ $(document).ready(()=>{
         $("#registerErr").show();
     }
     else if (age == "") {
-        $("#registerErr").html("Please enter a valid date date!");
+        $("#registerErr").html("Please enter a valid date!");
         $("#registerErr").show();
     }
     else if (gender == undefined) {
         $("#registerErr").html("Please select your gender and register");
         $("#registerErr").show();
     } else {
-        $.ajax({
-            type: 'POST',
-            contentType: "application/json; charset=utf-8",
-            url: "http://"+url+":"+port+'/users?user=' + user + '&pass=' + pass + '&gender=' + gender + '&age=' + age,
-            success: function (data) {
-                console.log(data)
-                data = JSON.parse(data)
-                if (data && data.uid){
-                    window.location = "./MainMenu.html?uid="+data.uid+"&user="+user
-                }
-                else{
-                    $("#registerErr").html("Problem connecting to the serv, please try again...");
+        var current_date = new Date()
+        if (current_date < new Date(age)) {
+            $("#registerErr").html("Please enter a valid age!");
+            $("#registerErr").show();
+        } else {
+            $.ajax({
+                type: 'POST',
+                contentType: "application/json; charset=utf-8",
+                url: "http://"+url+":"+port+'/users?user=' + user + '&pass=' + pass + '&gender=' + gender + '&age=' + age,
+                success: function (data) {
+                    data = JSON.parse(data)
+                    if ((typeof data[0]) != 'string'){
+                        window.location = "./MainMenu.html?uid="+data.uid+"&user="+user
+                    }
+                    else{
+                        $("#registerErr").html(data[0]);
+                        $("#registerErr").show();
+                    }
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                    $("#registerErr").html("Problem connecting to the server, please try again...");
                     $("#registerErr").show();
                 }
-            },
-            error: function(XMLHttpRequest, textStatus, errorThrown) {
-                $("#registerErr").html("Problem connecting to the server, please try again...");
-                $("#registerErr").show();
-            }
-        });
+            });
+        }
     }
     });
 });
