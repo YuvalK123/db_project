@@ -698,8 +698,10 @@ def add_person():
         try:  # insert person
             rows = insert_query(query=person_query, cursor=cursor)
             if rows == 0:
-                json.dumps(["The given data was not updated!<br>Please check that the number of characters in name "
+                cursor.close()
+                return json.dumps(["The given data was not updated!<br>Please check that the number of characters in name "
                             "and city is no longer than 70.<br>Then please try again!"])
+
             pid = cursor.lastrowid  # get person id
         except Exception as e:
             if cursor:
