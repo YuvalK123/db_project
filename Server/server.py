@@ -27,7 +27,6 @@ def get_best_score():
         cursor.close()
         if len(result) == 1:
             message = f"{result[0][0]} has the highest score which is {result[0][1]} since {result[0][2]}.\n"
-
             return message
         else:
             return "0 games were ended"
@@ -101,9 +100,7 @@ def get_gender_statistics():
 
 @app.route('/hint')
 def server_hints():
-    print("hint")
     country, user = request.args.get('country'), request.args.get('user')
-    print(country, user)
     is_new = request.args.get("new")
     fail = {"result": False, "data": "Database Connection lost"}
     if not (user or country):
@@ -113,7 +110,7 @@ def server_hints():
         cursor = db.cursor()
     except Exception as e:
         return DatabaseError(e)
-    if not not is_new:
+    if not is_new:
         hints_query = f"SELECT hints FROM games WHERE uid={user}"
         hints = select_query(query=hints_query, is_many=False, cursor=cursor)
         if not hints:
@@ -154,14 +151,14 @@ def server_hints():
                 break
     if len(hints) == 0:
         return json.dumps(["No Available Hint"])
-    print(hints)
     return json.dumps(hints)
 
 
 @app.route('/get_country')
-def get_random_country():
-    user = request.args.get(GAME_PARAMETERS["user"])
-    query = f"SELECT location FROM globalinfoapp.locations WHERE id NOT IN " \
+def get_random_country(user=None):
+    if not user:
+        user = request.args.get(GAME_PARAMETERS["user"])
+    query = f"SELECT location FROM locations WHERE id NOT IN " \
             f"(SELECT location FROM game_locations WHERE gid=(SELECT id FROM games WHERE uid={user} LIMIT 1)) " \
             f"ORDER BY RAND() LIMIT 1;"
     # query = "SELECT location FROM locations ORDER BY RAND() LIMIT 1"
@@ -318,20 +315,33 @@ def get_game():
 
 
 @app.route('/gameover')
-def delete_game():
-    game_id = request.args.get(GAME_PARAMETERS["game"])
+def delete_game(game_id=None):
+    if not game_id:
+        game_id = request.args.get(GAME_PARAMETERS["game"])
     try:
         cursor = db.cursor()
     except Exception as e:
         print(e)
         return DatabaseError(e)
+    count = count_records("games", cursor=cursor, where=f"id={game_id}")
+    if count < 1:
+        return -1
     rows = letters_query = f"DELETE FROM game_letter WHERE gid={game_id}"
     delete_query(query=letters_query, cursor=cursor, to_commit=False)
     locations_query = f"DELETE FROM game_locations WHERE gid={game_id}"
     rows = delete_query(query=locations_query, cursor=cursor)
+    score_query = f"SELECT uid, current_score FROM games WHERE id={game_id}"
+    score = select_query(query=score_query, cursor=cursor, is_many=False)
+    if score:
+        now = datetime.datetime.now()
+        dt_string = now.strftime("%Y-%m-%d %H:%M:%S")
+        score_query = f"INSERT INTO score_history (uid, score, datetime) VALUES " \
+                      f"({score[0]}, {score[1]}, '{dt_string}'); "
+        rows = insert_query(query=score_query, cursor=cursor)
     game_query = f"DELETE FROM games WHERE id={game_id}"
     rows = delete_query(query=game_query, cursor=cursor)
     return str(rows)
+
 
 
 @app.route('/user_country')
@@ -377,6 +387,20 @@ def users_countries():
         print(e)
         pass
     return json.dumps(fail)
+
+
+@app.route('/newgame')
+def new_game():
+    uid = request.args.get("uid")
+    fail = {"result": False, "data": "Invalid Input"}
+    if not uid:
+        return json.dumps(fail)
+    query = f"SELECT id FROM games WHERE uid={uid}"
+    gid = select_query(query, is_many=False)
+    if gid:
+        delete_game(gid[0])
+    country = get_random_country(uid)
+    return country
 
 
 @app.route('/savegame', methods=['POST'])
@@ -469,6 +493,7 @@ def update_user():
     """
     requires uid, and username to change username, pass to change password
     """
+    global db
     if request.method == 'POST':
         username, psw, uid = request.args.get("username"), request.args.get("pass"), request.args.get("uid")
         ret_val = -1
@@ -481,7 +506,7 @@ def update_user():
         else:
             return str(ret_val)
         try:
-            global db
+
             cursor = db.cursor()
             ret_val = update_query(query=query, cursor=cursor)
             # ret_val = cursor.execute(query)
@@ -526,7 +551,6 @@ def add_person():
     if name == '':
         return "-1"
     does_exist = select_query(query=f"SELECT id FROM people_info WHERE name='{name}'", is_many=False, cursor=cursor)
-    print(does_exist)
     if not does_exist:
         bornin = arg['bornin'] if 'bornin' in keys else None
         diedin = arg['diedin'] if 'diedin' in keys else None

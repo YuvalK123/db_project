@@ -17,6 +17,7 @@ $(document).ready(()=>{
                 acted = data.actedIn
                 directed = data.directed
                 gender = data.gender
+                $("#gen").html( (gender == "m")? "Male":"Female");
                 for (var t=0;t<acted.length;t++){
                     $("#movies").append("<p style=\"font-size: 18px;\">&#9675; "+Object.keys(acted[t])+" - as Actor - "+acted[t][Object.keys(acted[t])].join(",")+"</p>")
                 }

@@ -50,6 +50,7 @@ $(document).ready(()=>{
                     $("#hintsCountInfo").html(hintsLeft)
                     $("#Mis").html(oldGame.strikes);
                     mistakes = oldGame.strikes
+                    drawHangman(5-mistakes)
                     points = oldGame.score
                     $("#points").html("Points: "+oldGame.score);
                     if(!oldGame.curr_country){
@@ -117,12 +118,37 @@ $(document).ready(()=>{
     }
     else{
         mistakes = 5;
+        drawHangman(5-mistakes)
         points = 0;
         hintsLeft = 3;
         $("#hintsCountInfo").html(hintsLeft)
         $("#Mis").html(mistakes);
         $("#points").html("Points: "+points)
         getNewWord(true);
+    }
+
+    function drawHangman(mistakes){
+        switch(mistakes) {
+            case 0:
+                $("#hang").attr("src","./images/0mis.png")
+                break;
+            case 1:
+                $("#hang").attr("src","./images/1mis.png")
+                break;
+            case 2:
+                $("#hang").attr("src","./images/2mis.png")
+                break;
+            case 3:
+                $("#hang").attr("src","./images/3mis.png")
+                break;
+            case 4:
+                $("#hang").attr("src","./images/4mis.png")
+                break;
+            case 5:
+                $("#hang").attr("src","./images/5mis.png")
+                break;
+          }
+    
     }
 
     function getHints(isNew){
@@ -148,10 +174,17 @@ $(document).ready(()=>{
     }
 
     function getNewWord(isNew){
+        let addition;
+        if(isNew == true){
+            addition = "newgame"
+        }
+        else{
+            addition = "get_country"
+        }
         $.ajax({ 
             type: 'GET', 
             contentType: "application/json; charset=utf-8",
-            url: "http://"+url+":"+port+'/get_country?uid='+uid, 
+            url: "http://"+url+":"+port+'/'+addition+'?uid='+uid,
             success: function (data) {
                 var english = /^[A-Za-z0-9]*$/;
                 if (!english.test(data) ) {
@@ -264,6 +297,8 @@ $(document).ready(()=>{
         $("#next").hide();
         alert("Wrong letter! " + (--mistakes) +" mistaked left");
         $("#Mis").html(mistakes);
+        drawHangman(5-mistakes)
+        $("#save").trigger("click");
         if(mistakes <= 0){
             if(gid){
                 $.ajax({ 
@@ -320,10 +355,18 @@ $(document).ready(()=>{
           $("#hintsCountInfo").html(hintsLeft)
            alert(hints[hintsindex%hints.length])
            hintsindex++
+          $("#save").trigger("click");
       }
       else{
         alert("No More Hints Left!");
       }
+    });
+
+    $("#mainmenu").click(()=>{
+        var uid = $.urlParam("uid")
+        var user = $.urlParam("user")
+        var admin = $.urlParam("admin")
+        window.location = "./MainMenu.html?uid="+uid+"&user="+user+"&admin="+admin
     });
 
 
@@ -344,9 +387,7 @@ $(document).ready(()=>{
         url: "http://"+url+":"+port+"/savegame", 
         success: function (data) {
             gid = data;
-            alert("Game Saved!");
             usedHints = 0;
-
         },
         error: function(XMLHttpRequest, textStatus, errorThrown) {
 
@@ -399,8 +440,10 @@ function dataModelParser(data) {
     info.rests = info.rests ? info.rests : "";
     rests = info.rests.split(",");
     if (info.rests.length > 0) {
-        for (var k = 0; k < Math.min(rests.length, 5); k++) {
+        for (var k = 0; k < rests.length; k++) {
             rests[k] = rests[k].split(":")
+        }
+        for (var k = 0; k < Math.min(rests.length, 5); k++) {
             $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps</a><br>");
         }
     }
