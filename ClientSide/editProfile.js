@@ -50,12 +50,13 @@ $(document).ready(()=>{
     } else if (prev_user != user || prev_pass != pass){
         var my_url
         if (prev_user != user && prev_pass != pass) {
-            my_url = "http://"+url+":"+port+'/update_user?uid=' + uid +'&user=' + user + '&pass=' + pass
+            my_url = "http://"+url+":"+port+'/update_user?uid=' + uid +'&username=' + user + '&pass=' + pass
         } else if (prev_user != user) {
-            my_url = "http://"+url+":"+port+'/update_user?uid=' + uid +'&user=' + user
+            my_url = "http://"+url+":"+port+'/update_user?uid=' + uid +'&username=' + user
         } else {
             my_url = "http://"+url+":"+port+'/update_user?uid=' + uid +'&pass=' + pass
         }
+        console.log(my_url)
         console.log(123)
         $.ajax({
             type: 'POST',
