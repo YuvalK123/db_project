@@ -141,30 +141,38 @@ $(document).ready(()=>{
 
     function drawHangman(mistakes){
         // setting the figure according to the mistakes made.
+        $("#hang").fadeOut();
         switch(mistakes) {
             case 0:
                 $("#hang").attr("src","./images/0mis.png")
+                $("#hang").fadeIn();
                 break;
             case 1:
                 $("#hang").attr("src","./images/1mis.png")
+                $("#hang").fadeIn();
                 break;
             case 2:
                 $("#hang").attr("src","./images/2mis.png")
+                $("#hang").fadeIn();
                 break;
             case 3:
                 $("#hang").attr("src","./images/3mis.png")
+                $("#hang").fadeIn();
                 break;
             case 4:
                 $("#hang").attr("src","./images/4mis.png")
+                $("#hang").fadeIn();
                 break;
             case 5:
                 $("#hang").attr("src","./images/5mis.png")
+                $("#hang").fadeIn();
                 break;
             default:
                  $("#hang").attr("src","./images/0mis.png")
+                 $("#hang").fadeIn();
                 break;
           }
-    
+          $("#hang").fadeIn();
     }
 
     function getHints(isNew){
