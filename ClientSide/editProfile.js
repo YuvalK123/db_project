@@ -65,6 +65,8 @@ $(document).ready(()=>{
             success: function (data) {
                 console.log(data)
                 if (data > 0){
+                    prev_user = user
+                    prev_pass = pass
                     $("#updateMsg").html("Your changes were successfully saved!");
                 }
                 else{
@@ -78,6 +80,8 @@ $(document).ready(()=>{
             }
         });
     }
+    $("#updateMsg").html("You need to make some changes first..");
+    $("#updateMsg").show();
     });
 
     $("#menu").click(()=>{
