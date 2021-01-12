@@ -13,24 +13,11 @@ def datetime_tostring(o):
         return o.__str__()
 
 
-def get_from_option(option, country):
-    """
-    :param option: born - 1 option or died - 0 option.
-    :param country: string of people who died/born
-    :return:
-    """
-    if option == 1:
-        query = f"SELECT Name FROM people_info WHERE DiedIn='{country}' ORDER BY RAND() LIMIT 3;"
-        keyword = "has died"
-    else:
-        query = f"SELECT Name FROM people_info WHERE BornIn='{country}' ORDER BY RAND() LIMIT 3;"
-        keyword = "was born"
-    return query, keyword
-
-
 def get_hints(country, amount, cursor=None):
+    is_new = False
     try:
         if not cursor:
+            is_new = True
             cursor = db.cursor()
     except Exception as e:
         return DatabaseError(e)
@@ -60,7 +47,9 @@ def get_hints(country, amount, cursor=None):
                     rests_hints.append(hint)
             rests_hints.append(f"There is a total of {rests_count} restaurants there")
             queries["rests"] = rests_hints
-    print("q", queries)
+    if is_new:
+        if cursor:
+            cursor.close()
     return queries
 
 
@@ -86,14 +75,22 @@ def id_to_country(cursor=None, country_id=None):
     if not country_id:
         return None
     query = f"SELECT Location FROM locations WHERE id={country_id}"
+    is_new = False
     try:
         if not cursor:
+            is_new = True
             cursor = db.cursor()
         cursor.execute(query)
         record = cursor.fetchone()
+        if is_new:
+            if cursor:
+                cursor.close()
         return record[0]
     except Exception as e:
         print(e)
+        if is_new:
+            if cursor:
+                cursor.close()
         return None
 
 
@@ -103,6 +100,7 @@ def countries_to_ids(countries, cursor=None):
     :param countries: union of locations strings
     :return: list of ids
     """
+    is_new = False
     if not countries:
         return None
     idx = []
@@ -110,16 +108,23 @@ def countries_to_ids(countries, cursor=None):
     query = f"SELECT id FROM locations WHERE location IN ({locations});"
     try:
         if not cursor:
+            is_new = True
             cursor = db.cursor()
         # cursor = db.cursor()
         rows = cursor.execute(query)
         if not rows:
+            if is_new:
+                if cursor:
+                    cursor.close()
             return []
         records = cursor.fetchall()
         if records:
             idx = [x[0] for x in records]
     except Exception as e:
         print(e)
+    if is_new:
+        if cursor:
+            cursor.close()
     return idx
 
 
@@ -145,51 +150,52 @@ def filter_countries(countries_idx, uid, cursor=None, table="user_locations"):
     :param table: table with location and uid field
     :return: list of countries idx that don't exist in table
     """
+    is_new = False
     query, idx = f"SELECT location FROM {table} WHERE uid={uid}", None
     try:
         if not cursor:
+            is_new = True
             cursor = db.cursor()
         rows = cursor.execute(query)
-        # if not rows:
-        #     return []
         records = cursor.fetchall()
         if not records:
+            if is_new:
+                if cursor:
+                    cursor.close()
             return countries_idx
         idx = [x[0] for x in records]
     except Exception as e:
         print(e)
+        if is_new:
+            if cursor:
+                cursor.close()
         return []
     ret = [x for x in countries_idx if x not in idx]
+    if is_new:
+        if cursor:
+            cursor.close()
     return ret
 
 
-# def get_user_age(uid):
-#     yeardays = 365.2425
-#     age = -1
-#     try:
-#         cursor = db.cursor()
-#         query = f"SELECT age FROM users WHERE id={uid}"
-#         cursor.execute(query)
-#         age = cursor.fetchone()
-#         if age:
-#             today, age = datetime.date.today(), age[0]
-#             age = (today - age).days/yeardays
-#     except Exception as e:
-#         print(e)
-#     return str(age)
-
-
 def update_hints(uid, amount, cursor=None, relative_amount=False):
+    is_new = False
     if relative_amount:
         amount = int(amount)
         query = f"SELECT hints FROM games WHERE uid={uid}"
+        if not cursor:
+            is_new = True
+            cursor = db.cursor()
         rows = cursor.execute(query)
         record = cursor.fetchone()
         if record:
             hints = record[0]
             amount += hints
     where = f"WHERE uid={uid}"
-    return update_query(table="games", fields={'hints': amount}, where=where, cursor=cursor)
+    val = update_query(table="games", fields={'hints': amount}, where=where, cursor=cursor)
+    if is_new:
+        if cursor:
+            cursor.close()
+    return val
 
 
 def update_query(query=None, table=None, fields=None, where=None, cursor=None):
@@ -201,7 +207,8 @@ def update_query(query=None, table=None, fields=None, where=None, cursor=None):
     :param where: if not query, where clause string starting with WHERE
     :return: number of row affected, -1 if invalid input
     """
-
+    rows = 0
+    is_new = False
     if not query:
         # build query
         condition = table is not None and fields is not None
@@ -212,15 +219,18 @@ def update_query(query=None, table=None, fields=None, where=None, cursor=None):
         query += ", ".join(fields_clause)
         if where:
             query += " " + where
-    print(query)
-    rows = 0
     try:
         if not cursor:
+            is_new = True
             cursor = db.cursor()
         rows = cursor.execute(query)
         db.commit()
     except Exception as e:
+        db.rollback()
         print(e)
+    if is_new:
+        if cursor:
+            cursor.close()
     return rows
 
 
@@ -233,6 +243,7 @@ def insert_query(query=None, table=None, fields=None, execmany=None, cursor=None
     :param cursor: db cursor
     :return: number of row affected, -1 if invalid input
     """
+    is_new = False
     if not query:
         # build query
         condition = table is not None and fields is not None
@@ -251,6 +262,7 @@ def insert_query(query=None, table=None, fields=None, execmany=None, cursor=None
     rows = 0
     try:
         if not cursor:
+            is_new = True
             cursor = db.cursor()
         if execmany:
             rows = cursor.executemany(query, execmany)
@@ -258,20 +270,32 @@ def insert_query(query=None, table=None, fields=None, execmany=None, cursor=None
             rows = cursor.execute(query)
         db.commit()
     except Exception as e:
+        db.rollback()
         print(e)
-        print(rows)
+    if is_new:
+        if cursor:
+            cursor.close()
     return rows
 
 
 def delete_query(query, cursor=None, to_commit=True):
+    is_new = False
     try:
         if not cursor:
+            is_new = True
             cursor = db.cursor()
         rows = cursor.execute(query)
         if to_commit:
             db.commit()
     except Exception as e:
+        db.rollback()
+        if is_new:
+            if cursor:
+                cursor.close()
         return -1
+    if is_new:
+        if cursor:
+            cursor.close()
     return rows
 
 
@@ -282,8 +306,10 @@ def select_query(query, cursor=None, is_many=True):
     :param is_many: to fetch many or one record
     :return: records from select query
     """
+    is_new = False
     try:
         if not cursor:
+            is_new = True
             cursor = db.cursor()
         rows = cursor.execute(query)
         if not rows:
@@ -292,28 +318,42 @@ def select_query(query, cursor=None, is_many=True):
         if not is_many:
             exec_f = cursor.fetchone
         records = exec_f()
+        if is_new:
+            if cursor:
+                cursor.close()
         return records
     except Exception as e:
         print(e)
+    if is_new:
+        if cursor:
+            cursor.close()
     return tuple()
 
 
 def check_if_admin(uid, cursor=None):
     query = f"SELECT * FROM admins WHERE uid={uid}"
     rows = 0
+    is_new = False
     try:
         if not cursor:
+            is_new = True
             cursor = db.cursor()
         rows = cursor.execute(query)
     except Exception as e:
         print(e)
+    if is_new:
+        if cursor:
+            cursor.close()
     return rows != 0
 
 
 def count_records(table: str, cursor=None, where=None):
+    is_new = False
     try:
         if not cursor:
+            is_new = True
             cursor = db.cursor()
+        # build query
         query = f"SELECT COUNT(*) FROM {table}"
         if where:
             query += " WHERE " + where
@@ -321,9 +361,15 @@ def count_records(table: str, cursor=None, where=None):
         rows = cursor.fetchone()
         if rows:
             rows = rows[0]
+        if is_new:
+            if cursor:
+                cursor.close()
         return rows
     except Exception as e:
         print(e)
+    if is_new:
+        if cursor:
+            cursor.close()
     return -1
 
 
@@ -334,19 +380,27 @@ def add_location(location: str, cursor=None):
     :param cursor: database cursor
     :return: id of place in db
     """
+    is_new = False
     try:
         if not cursor:
+            is_new = True
             cursor = db.cursor()
     except:
         return -1
-    record = select_query(query=f"SELECT id FROM locations WHERE LOWER(location)='{location.strip()}'",
+    record = select_query(query=f"SELECT id FROM locations WHERE LOWER(location)='{location.strip().lower()}'",
                           cursor=cursor, is_many=False)
     if record:
+        if is_new:
+            if cursor:
+                cursor.close()
         return record[0]
     query = f"INSERT INTO locations (location) VALUES ('{location.strip()}');"
     rows = insert_query(query=query, cursor=cursor)
     try:
         country_id = cursor.lastrowid
-    except:
+    except Exception as e:
         country_id = -1
+    if is_new:
+        if cursor:
+            cursor.close()
     return country_id

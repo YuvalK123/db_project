@@ -3,6 +3,7 @@ from server_helper import *
 
 @app.route('/bestScores')
 def get_best_scores():
+    cursor = None
     try:
         cursor = db.cursor()
         query_best_10_scores = "SELECT users.username, score_history.score, score_history.datetime FROM " \
@@ -13,10 +14,14 @@ def get_best_scores():
         return json.dumps(result, default=datetime_tostring)
     except Exception as e:
         print(e)
+        if cursor:
+            cursor.close()
         return DatabaseError(e)
+
 
 @app.route('/admin/best_score')
 def get_best_score():
+    cursor = None
     try:
         cursor = db.cursor()
         best_score_query = "SELECT username, score, datetime FROM users, (SELECT uid, MAX(score) AS " \
@@ -32,11 +37,14 @@ def get_best_score():
             return "0 games were ended"
     except Exception as e:
         print(e)
+        if cursor:
+            cursor.close()
         return DatabaseError(e)
 
 
 @app.route('/admin/quantity_of_gamers')
 def get_number_of_gamers():
+    cursor = None
     try:
         cursor = db.cursor()
         num_gamers_query = "SELECT COUNT(*) FROM ((SELECT uid FROM games) UNION (SELECT uid FROM " \
@@ -49,11 +57,14 @@ def get_number_of_gamers():
         return message
     except Exception as e:
         print(e)
+        if cursor:
+            cursor.close()
         return DatabaseError(e)
 
 
 @app.route('/admin/age_statistics')
 def get_age_statistics():
+    cursor = None
     try:
         query_avg_score_according_to_ages = "SELECT AVG(score) FROM score_history, users WHERE users.id = " \
                                             "score_history.uid AND users.age BETWEEN %s AND %s;"
@@ -64,23 +75,26 @@ def get_age_statistics():
         fifty_five_years_ago = datetime.date.today() - relativedelta(years=55)
         cursor.execute(query_avg_score_according_to_ages, (fifty_five_years_ago, twenty_five_years_ago))
         avg_score_adults = cursor.fetchall()[0][0]
-        hundred_years_ago = datetime.date.today() - relativedelta(years=100)
+        hundred_years_ago = datetime.date.today() - relativedelta(years=120)
         cursor.execute(query_avg_score_according_to_ages, (hundred_years_ago, fifty_five_years_ago))
         avg_score_elders = cursor.fetchall()[0][0]
         avg_score_young = 0 if avg_score_young is None else avg_score_young
         avg_score_adults = 0 if avg_score_adults is None else avg_score_adults
         avg_score_elders = 0 if avg_score_elders is None else avg_score_elders
         message = f"Average score for ages 0-25: {avg_score_young}\nAverage score for ages 26-55: " \
-                  f"{avg_score_adults}\nAverage score for ages 56-99: {avg_score_elders}\n"
+                  f"{avg_score_adults}\nAverage score for ages 56-120: {avg_score_elders}\n"
         cursor.close()
         return message
     except Exception as e:
         print(e)
+        if cursor:
+            cursor.close()
         return DatabaseError(e)
 
 
 @app.route('/admin/gender')
 def get_gender_statistics():
+    cursor = None
     try:
         query_gender_score_sum = "SELECT SUM(score) FROM users, score_history WHERE users.id = score_history.uid " \
                                  "AND users.gender = %s;"
@@ -96,7 +110,10 @@ def get_gender_statistics():
         return message
     except Exception as e:
         print(e)
+        if cursor:
+            cursor.close()
         return DatabaseError(e)
+
 
 @app.route('/hint')
 def server_hints():
@@ -121,6 +138,7 @@ def server_hints():
         amount = 3
     country = country_to_id(cursor=cursor, country=country)
     if amount < 1:
+        cursor.close()
         return "No Available Hint"
     # query, keyword = get_from_option(option, country)
     hints_list = get_hints(country, amount, cursor=cursor)
@@ -151,6 +169,7 @@ def server_hints():
                 break
     if len(hints) == 0:
         return json.dumps(["No Available Hint"])
+    cursor.close()
     return json.dumps(hints)
 
 
@@ -162,15 +181,18 @@ def get_random_country(user=None):
             f"(SELECT location FROM game_locations WHERE gid=(SELECT id FROM games WHERE uid={user} LIMIT 1)) " \
             f"ORDER BY RAND() LIMIT 1;"
     # query = "SELECT location FROM locations ORDER BY RAND() LIMIT 1"
+    cursor = None
     try:
         cursor = db.cursor()
         cursor.execute(query)
         country = cursor.fetchone()
-        print(country)
+        cursor.close()
         if len(country) > 0:
             return country[0]
         return "fail"
     except Exception as e:
+        if cursor:
+            cursor.close()
         return DatabaseError(e)
 
 
@@ -178,6 +200,7 @@ def get_random_country(user=None):
 def get_person_movies():
     person = request.args.get('person')
     ret = {"gender": "", "actedIn": [], "directed": []}
+    cursor = None
     if not person:
         return json.dumps(None)
     try:
@@ -186,6 +209,7 @@ def get_person_movies():
         cursor.execute(query)
         record = cursor.fetchone()
         if not record:
+            cursor.close()
             return json.dumps(None)
         pid, ret["gender"] = record
         # get all movies
@@ -193,6 +217,7 @@ def get_person_movies():
         cursor.execute(query)
         record = cursor.fetchall()  # ((301,0/1), (555,0/1),...)
         if not record:
+            cursor.close()
             return json.dumps(None)
         actor_id, directors_id = "00", "01"
         actor_movies = tuple((x[0]) for x in record if actor_id in str(x[1]))
@@ -201,22 +226,24 @@ def get_person_movies():
             ret["actedIn"] = movies_record_to_list(movies_idx=actor_movies, cursor=cursor)
         if len(director_movies) > 0:
             ret["directed"] = movies_record_to_list(movies_idx=director_movies, cursor=cursor)
+        cursor.close()
     except Exception as e:
         print(e)
+        if cursor:
+            cursor.close()
         return DatabaseError(e)
     return json.dumps(ret)
-    pass
 
 
 @app.route('/get_people')
 def get_all_related():
-    country = request.args.get('country')
-    born_query = f"SELECT Name FROM people_info WHERE BornIn=(SELECT id FROM locations WHERE location='{country}');"
-    died_query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country}');"
-    rests_query = f"SELECT DISTINCT name,latitude,longitude,url FROM restaurants WHERE city_id=" \
+    country, cursor = request.args.get('country'), None
+    born_query = f"SELECT Name FROM people_info WHERE BornIn IN " \
+                 f"(SELECT id FROM locations WHERE location='{country}');"
+    died_query = f"SELECT Name FROM people_info WHERE DiedIn IN " \
+                 f"(SELECT id FROM locations WHERE location='{country}');"
+    rests_query = f"SELECT DISTINCT name,latitude,longitude,url FROM restaurants WHERE city_id IN" \
                   f"(SELECT id FROM locations WHERE location='{country}');"
-    rests_count_query = f"SELECT COUNT(name) FROM restaurants WHERE city_id=" \
-                        f"(SELECT id FROM locations WHERE location='{country}');"
     try:
         cursor = db.cursor()
         cursor.execute(born_query)
@@ -228,24 +255,23 @@ def get_all_related():
         cursor.execute(rests_query)
         rests_country = cursor.fetchall()
         rests_country = list(rests_country)
+        rests_count = [len(rests_country)]
         for x in range(len(rests_country)):
             rests_country[x] = list(rests_country[x])
             (rests_country[x])[1] = str((rests_country[x])[1])
             (rests_country[x])[2] = str((rests_country[x])[2])
             (rests_country[x])[3] = str((rests_country[x])[3])
         rests_country = [";".join(x) for x in rests_country]
-
-        cursor.execute(rests_count_query)
-        rests_count = cursor.fetchall()
-        rests_count = [x[0] for x in rests_count]
-
         b = ",".join(born_country)
         d = ",".join(died_country)
         r = ",".join(rests_country)
         ret = {"born": b, "died": d, "rests": r, "restsCount": rests_count}
+        cursor.close()
         return json.dumps(ret)
     except Exception as e:
         print(e)
+        if cursor:
+            cursor.close()
         return DatabaseError(e)
 
 
@@ -269,6 +295,7 @@ def users():
                      f"('{username}', '{psw}', '{age}', '{gender}');"
         val = insert_query(query=query, cursor=cursor)
         if val == 0:
+            cursor.close()
             return json.dumps(["Please check that your username is no longer than 20 characters and password is no "
                                "longer than 25 characters.Then, please try again!"])
         query = f"SELECT id FROM users WHERE (username='{username}' AND password='{psw}') LIMIT 1;"
@@ -283,19 +310,19 @@ def users():
             record = cursor.fetchone()
             if record:
                 uid = record[0]
-                query = f"SELECT uid from admins WHERE uid={uid} LIMIT 1;"
-                cursor.execute(query)
-                r = cursor.fetchone()
+                r = check_if_admin(uid, cursor=cursor)
                 if r:
                     is_admin = True
         except Exception as e:
             print("e", e)
+    if cursor:
+        cursor.close()
     return json.dumps({"uid": uid, "admin": is_admin})
 
 
 @app.route('/getgame', methods=['GET'])
 def get_game():
-    user = request.args.get(GAME_PARAMETERS["user"])
+    user, cursor = request.args.get(GAME_PARAMETERS["user"]), None
     ret_value = {"score": None, "letters": None, "curr_country": None, "strikes": None, "gid": None, "hints": None}
     try:
         cursor = db.cursor()
@@ -303,6 +330,7 @@ def get_game():
         rows = cursor.execute(query)
         game_record = cursor.fetchone()
         if not game_record:
+            cursor.close()
             return json.dumps(None)
         ret_value["gid"], ret_value["score"], ret_value["strikes"], ret_value["hints"], ret_value["curr_country"] = \
             game_record
@@ -314,8 +342,11 @@ def get_game():
         if letters_records:
             letters = [letter[0] for letter in letters_records]
             ret_value["letters"] = ",".join(letters)
+        cursor.close()
     except Exception as e:
         print(e)
+        if cursor:
+            cursor.close()
         return DatabaseError(e)
     return json.dumps(ret_value)
 
@@ -332,10 +363,14 @@ def delete_game(game_id=None):
     count = count_records("games", cursor=cursor, where=f"id={game_id}")
     if count < 1:
         return -1
-    rows = letters_query = f"DELETE FROM game_letter WHERE gid={game_id}"
-    delete_query(query=letters_query, cursor=cursor, to_commit=False)
+    letters_query = f"DELETE FROM game_letter WHERE gid={game_id}"
+    rows = delete_query(query=letters_query, cursor=cursor, to_commit=False)
+    if rows < 0:  # failed delete
+        return -1
     locations_query = f"DELETE FROM game_locations WHERE gid={game_id}"
     rows = delete_query(query=locations_query, cursor=cursor)
+    if rows < 0:  # failed delete
+        return -1
     score_query = f"SELECT uid, current_score FROM games WHERE id={game_id}"
     score = select_query(query=score_query, cursor=cursor, is_many=False)
     if score:
@@ -346,13 +381,15 @@ def delete_game(game_id=None):
         rows = insert_query(query=score_query, cursor=cursor)
     game_query = f"DELETE FROM games WHERE id={game_id}"
     rows = delete_query(query=game_query, cursor=cursor)
+    cursor.close()
+    if rows < 0:  # failed delete
+        return "-1"
     return str(rows)
-
 
 
 @app.route('/user_country')
 def users_countries():
-    uid = request.args.get('uid')
+    uid, cursor = request.args.get('uid'), None
     country_range = request.args.get('range')
     fail = {"result": False, "data": "Database Connection lost"}
     if not uid:
@@ -374,13 +411,14 @@ def users_countries():
         else:
             max_id = count_records(table="user_locations", where=f"uid={uid}", cursor=cursor)
             if max_id < 0:
+                cursor.close()
                 return json.dumps(fail)
 
             if max_id < min_range:
                 max_range = max_id
                 min_range = 0
-            query = f"SELECT location FROM locations WHERE id IN (SELECT location FROM user_locations WHERE uid={uid}) " \
-                    f"LIMIT {min_range}, {max_range};"
+            query = f"SELECT location FROM locations WHERE id IN (SELECT location FROM user_locations " \
+                    f"WHERE uid={uid}) LIMIT {min_range}, {max_range};"
         ret["count"] = max_id
         rows = cursor.execute(query)
         records = cursor.fetchall()
@@ -388,10 +426,12 @@ def users_countries():
             places = [x[0] for x in records if x[0] != '']
             locations = ",".join(places)
             ret["locations"] = locations
+        cursor.close()
         return json.dumps(ret)
     except Exception as e:
         print(e)
-        pass
+    if cursor:
+        cursor.close()
     return json.dumps(fail)
 
 
@@ -477,10 +517,12 @@ def save_game():
                     query = f"INSERT INTO user_locations (uid, location) VALUES (%s, %s)"
                     locations = [(user, location) for location in user_locations if location is not None]
                     insert_query(query=query, execmany=locations, cursor=cursor)
-                # cursor.executemany(query, locations)
-        # db.commit()
+        if cursor:
+            cursor.close()
     except Exception as e:
         print(e)
+        if cursor:
+            cursor.close()
         return DatabaseError(e)
     return str(game_id)
 
@@ -500,6 +542,7 @@ def update_user():
     requires uid, and username to change username, pass to change password
     """
     global db
+    cursor = None
     if request.method == 'POST':
         username, psw, uid = request.args.get("username"), request.args.get("pass"), request.args.get("uid")
         ret_val = -1
@@ -512,14 +555,12 @@ def update_user():
         else:
             return str(ret_val)
         try:
-
             cursor = db.cursor()
             ret_val = update_query(query=query, cursor=cursor)
-            # ret_val = cursor.execute(query)
-            # db.commit()
         except Exception as e:
             print(e)
-            pass
+        if cursor:
+            cursor.close()
         return str(ret_val)
     else:
         query = f"SELECT username, password, age, gender FROM users WHERE users.id = {request.args.get('uid')};"
@@ -529,9 +570,13 @@ def update_user():
             result = cursor.fetchall()
             if len(result) == 0:
                 return {}
+            if cursor:
+                cursor.close()
             return json.dumps(result[0], default=str)
         except Exception as e:
             print(e)
+            if cursor:
+                cursor.close()
             return DatabaseError(e)
 
 
@@ -547,6 +592,7 @@ def get_all_genres():
 @app.route('/add_person', methods=['POST'])
 def add_person():
     arg = request.json
+    print(arg)
     keys = arg.keys()
     try:
         cursor = db.cursor()
@@ -555,13 +601,18 @@ def add_person():
         return json.dumps([500])
     name = arg["name"] if "name" in keys else ''
     if name == '':
+        if cursor:
+            cursor.close()
         return json.dumps(["Name of personality was not given"])
-    does_exist = select_query(query=f"SELECT id FROM people_info WHERE name='{name}'", is_many=False, cursor=cursor)
+    does_exist = select_query(query=f"SELECT id FROM people_info WHERE name='{name}'",
+                              is_many=False, cursor=cursor)
     if not does_exist:
         bornin = arg['bornin'] if 'bornin' in keys else None
         diedin = arg['diedin'] if 'diedin' in keys else None
         gender = arg['gender'] if 'gender' in keys else 'f'
         if not (bornin or diedin):
+            if cursor:
+                cursor.close()
             return json.dumps(["At least one location must be given!<br>After inserting the data please try again!"])
         # insert to people_info
         born = add_location(bornin, cursor=cursor) if bornin else "NULL"
@@ -580,12 +631,16 @@ def add_person():
             rows = insert_query(query=person_query, cursor=cursor)
             pid = cursor.lastrowid
         except Exception as e:
+            if cursor:
+                cursor.close()
             return json.dumps([500])
     else:
         pid = does_exist[0]
     # no movie to add, se we're done
     movie = arg["movie"] if "movie" in keys else ''
     if movie == '':
+        if cursor:
+            cursor.close()
         return json.dumps(["The given data was successfully saved!"])
     job = arg["job"] if "job" in keys else '0'
     genres = arg["genres"] if "genres" in keys else ''
@@ -593,6 +648,8 @@ def add_person():
     movie_query = f"INSERT INTO movies (movieName) VALUES ('{movie}')"
     rows = insert_query(query=movie_query, cursor=cursor)
     if rows < 1:
+        if cursor:
+            cursor.close()
         return json.dumps(["The movie insertion went wrong, please try again!"])
     movie_id = cursor.lastrowid
     # add person movie
@@ -603,8 +660,12 @@ def add_person():
         rows = insert_query(query=query, cursor=cursor)
     # if movie has no genres, return person's id
     if not genres:
+        if cursor:
+            cursor.close()
         return json.dumps(["The given data was successfully saved!"])
     if len(genres) <= 0:
+        if cursor:
+            cursor.close()
         return json.dumps(["The given data was successfully saved!"])
     # add genres
     # genres = [genres list]
@@ -615,10 +676,14 @@ def add_person():
         genres_values = [(movie_id, g) for g in genres_ids]
         insert = f"INSERT INTO movies_genres (movieId, genreId) VALUES (%s, %s)"
         rows = insert_query(query=insert, cursor=cursor, execmany=genres_values)
+        if cursor:
+            cursor.close()
         if rows > 0:
             return json.dumps(["The given data was successfully saved!"])
         else:
             return json.dumps(["Something went wrong with inserting the genres, please try again!"])
+    if cursor:
+        cursor.close()
     return json.dumps(["Something went wrong with inserting the genres, please try again!"])
 
 
