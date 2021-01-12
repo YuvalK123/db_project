@@ -24,20 +24,6 @@
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous"></script>
         <style>
-            .colored{
-                background-color: blueviolet;
-                outline: 5px auto -webkit-focus-ring-color;
-            }
-            .coloredBlue{
-                background-color: cyan;
-                outline: 5px auto -webkit-focus-ring-color;
-            }
-
-            .good{
-                background-color: green;
-                border: 2px solid #000 !important;
-            }
-
             .noselect {
                  -webkit-touch-callout: none; /* iOS Safari */
                  -webkit-user-select: none; /* Safari */
@@ -46,84 +32,81 @@
                  -ms-user-select: none; /* Internet Explorer/Edge */
                  user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome, Edge, Opera and Firefox */
+            }
         </style>
     </head>
     <body class="noselect">
-    <script src="./addData.js"></script>
-        <div id="additionScreen"
-            style="padding:50px;background-color:brown;color:white;">
-            <div class="row">
-                <div class="col-md-8"></div>
-                <div class="col-md-12">
-                    <div class="row">
-                        <div id="welcome" class="col-md-12" style="font-size:
-                            26px;font-weight:bold">Add data to the game!</div><br><br>
-                        <br><Br>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3" style="font-size: 20px;"><p>Name of personality:</p></div>
-                        <div class="col-md-4"><input type="text" id="name"
-                                class="form-control"></div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3" style="font-size: 20px;"><p>City of birth:</p></div>
-                        <div class="col-md-4"><input type="text" id="bornIn"
-                                class="form-control"></div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3" style="font-size: 20px;"><p>City of death:</p></div>
-                        <div class="col-md-4"><input class="form-control" type="text" id="diedIn"></div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3" style="font-size: 20px;"><p>Gender:</p></div>
-                        <div class="col-md-4">
-                            <input type="radio" id="male" name="gender" value="m">
-                            <label for="male">Male</label><br>
-                            <input type="radio" id="female" name="gender" value="f">
-                            <label for="female">Female</label><br>
+        <script src="./addData.js"></script>
+            <div id="additionScreen" style="padding:50px;background-color:brown;color:white;">
+                <div class="row">
+                    <div class="col-md-8"></div>
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div id="welcome" class="col-md-12" style="font-size:
+                                26px;font-weight:bold">Add data to the game!</div><br><br>
+                            <br><Br>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3" style="font-size: 20px;"><p>Name of personality:</p></div>
+                            <div class="col-md-4"><input type="text" id="name" class="form-control"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3" style="font-size: 20px;"><p>City of birth:</p></div>
+                            <div class="col-md-4"><input type="text" id="bornIn" class="form-control"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3" style="font-size: 20px;"><p>City of death:</p></div>
+                            <div class="col-md-4"><input class="form-control" type="text" id="diedIn"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3" style="font-size: 20px;"><p>Gender:</p></div>
+                            <div class="col-md-4">
+                                <input type="radio" id="male" name="gender" value="m">
+                                <label for="male">Male</label><br>
+                                <input type="radio" id="female" name="gender" value="f">
+                                <label for="female">Female</label><br>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3" style="font-size: 20px;"><p>Name of the movie:</p></div>
+                            <div class="col-md-4"><input type="text" id="movie" class="form-control"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3" style="font-size: 20px;"><p>Movie's genres:</p></div>
+                            <div class="col-md-2" id="genreContainer1">
+                                <!-- genres form server-->
+                            </div>
+                            <div class="col-md-4" id="genreContainer2">
+                                <!-- genres form server-->
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3" style="font-size: 20px;"><p>Role:</p></div>
+                            <div class="col-md-4">
+                                <input type="radio" id="actor" name="role" value="0">
+                                <label for="male">Actor</label><br>
+                                <input type="radio" id="director" name="role" value="1">
+                                <label for="female">Director</label><br>
+                        </div>
+                        <div class="row"></div>
+                        <div class="row"><br></div>
+                        <div class="row">
+                            <div class="col-md-1" style="font-size: 20px;"></div>
+                            <div class="col-md-3"><button id="save"
+                                style="color:black;margin:auto;width:150px"
+                                class="btn float-center">Add data!</button></div>
+                            <div class="col-md-3"><button id="back"
+                                style="color:black;margin:auto;width:150px"
+                                class="btn float-center">Back to admin page!</button></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-0" style="font-size: 20px;"></div>
+                            <div class="col-md-12"><p id="addDataMsg" style="font-size: 20px;padding-top:15px;display:none;">Username or password is incorrect, please try again...</p></div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-3" style="font-size: 20px;"><p>Name of the movie:</p></div>
-                        <div class="col-md-4"><input type="text" id="movie"
-                                class="form-control"></div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3" style="font-size: 20px;"><p>Movie's genres:</p></div>
-                        <div class="col-md-2" id="genreContainer1">
-                            <!-- genres form server-->
-                        </div>
-                        <div class="col-md-4" id="genreContainer2">
-                            <!-- genres form server-->
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3" style="font-size: 20px;"><p>Role:</p></div>
-                        <div class="col-md-4">
-                            <input type="radio" id="actor" name="role" value="0">
-                            <label for="male">Actor</label><br>
-                            <input type="radio" id="director" name="role" value="1">
-                            <label for="female">Director</label><br>
-                    </div>
-                    <div class="row"></div>
-                    <div class="row"><br></div>
-                    <div class="row">
-                        <div class="col-md-1" style="font-size: 20px;"></div>
-                        <div class="col-md-3"><button id="save"
-                            style="color:black;margin:auto;width:150px"
-                            class="btn float-center">Add data!</button></div>
-                        <div class="col-md-3"><button id="back"
-                            style="color:black;margin:auto;width:150px"
-                            class="btn float-center">Back to admin page!</button></div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-0" style="font-size: 20px;"></div>
-                        <div class="col-md-12"><p id="addDataMsg" style="font-size: 20px;padding-top:15px;display:none;">Username or password is incorrect, please try again...</p></div>
-
+                        <div class="col-md-3"></div>
                     </div>
                 </div>
-                <div class="col-md-3"></div>
             </div>
-            </div></div>
     </body>
 </html>

@@ -24,20 +24,6 @@
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous"></script>
         <style>
-            .colored{
-                background-color: blueviolet;
-                outline: 5px auto -webkit-focus-ring-color;
-            }
-            .coloredBlue{
-                background-color: cyan;
-                outline: 5px auto -webkit-focus-ring-color;
-            }
-
-            .good{
-                background-color: green;
-                border: 2px solid #000 !important;
-            }
-
             .noselect {
                  -webkit-touch-callout: none; /* iOS Safari */
                  -webkit-user-select: none; /* Safari */
@@ -46,13 +32,12 @@
                  -ms-user-select: none; /* Internet Explorer/Edge */
                  user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome, Edge, Opera and Firefox */
-
+            }
         </style>
     </head>
     <body class="noselect">
     <script src="./register.js"></script>
-        <div id="registerScreen"
-            style="padding:50px;background-color:brown;color:white;">
+        <div id="registerScreen" style="padding:50px;background-color:brown;color:white;">
             <div class="row">
                 <div class="col-md-3"></div>
                 <div class="col-md-8">
@@ -63,13 +48,11 @@
                     </div>
                     <div class="row">
                         <div class="col-md-3" style="font-size: 20px;"><p>Username</p></div>
-                        <div class="col-md-4"><input type="text" id="username"
-                                class="form-control"></div>
+                        <div class="col-md-4"><input type="text" id="username" class="form-control"></div>
                     </div>
                     <div class="row">
                         <div class="col-md-3" style="font-size: 20px;"><p>Password</p></div>
-                        <div class="col-md-4"><input type="password" id="password"
-                                class="form-control"></div>
+                        <div class="col-md-4"><input type="password" id="password" class="form-control"></div>
                     </div>
                     <div class="row">
                         <div class="col-md-3" style="font-size: 20px;"><p>Birth Date</p></div>
@@ -88,18 +71,15 @@
                     <div class="row"><br></div>
                     <div class="row">
                         <div class="col-md-4" style="font-size: 20px;"></div>
-                        <div class="col-md-5"><button id="register"
-                            style="color:black;margin:auto;width:100px"
-                            class="btn float-center">Register!</button></div>
+                        <div class="col-md-5"><button id="register" style="color:black;margin:auto;width:100px" class="btn float-center">Register!</button></div>
                     </div>
                     <div class="row">
                         <div class="col-md-0" style="font-size: 20px;"></div>
                         <div class="col-md-12"><p id="registerErr" style="font-size: 20px;padding-top:15px;display:none;">Username or password is incorrect, please try again...</p></div>
-
                     </div>
                 </div>
                 <div class="col-md-3"></div>
             </div>
-            </div></div>
+        </div>
     </body>
 </html>

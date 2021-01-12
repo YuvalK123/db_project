@@ -16,8 +16,6 @@ var hiddenWord;
 var letterOptions = new Array(parseInt(26));; 
 var isWin = false;
 
-$("#Mis").html(mistakes);
-
 $(document).ready(()=>{
 
     $("#login").click(()=>{

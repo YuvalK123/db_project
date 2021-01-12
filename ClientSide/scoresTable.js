@@ -2,6 +2,7 @@ var url = "localhost";
 var port = 3000;
 
 $(document).ready(()=>{
+    // gets from the server top ten games and the data of the user that played that game
     $.ajax({
         type: 'GET',
         contentType: "application/json; charset=utf-8",
@@ -16,6 +17,7 @@ $(document).ready(()=>{
             heading_row.append($('<th>').addClass('text-center').text('score'))
             heading_row.append($('<th>').addClass('text-center').text('date time'))
             table.append(heading_row)
+            // creates body of the table
             t_body = $('<tbody>')
             for (let row = 0; row < data.length; row++) {
                 var curr_row = $('<tr>')
@@ -29,12 +31,14 @@ $(document).ready(()=>{
             table.append(t_body)
             $('#table').append(table);
         },
+        // something went wrong in the server
         error: function(XMLHttpRequest, textStatus, errorThrown) {
             $("#loginErr").html("Problem connecting to the server, please try again...");
             $("#loginErr").show();
         }
     });
 
+    // moves the user to the main menu page
     $("#menu").click(()=>{
         var uid = $.urlParam("uid")
         var user = $.urlParam("user")
@@ -43,6 +47,7 @@ $(document).ready(()=>{
     });
 });
 
+// function responsible to add to list checked genres and return the list.
 $.urlParam = function(name){
     var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
     if (results==null) {
