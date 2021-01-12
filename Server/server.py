@@ -697,6 +697,9 @@ def add_person():
                            f"{died});"
         try:  # insert person
             rows = insert_query(query=person_query, cursor=cursor)
+            if rows == 0:
+                json.dumps(["The given data was not updated!<br>Please check that the number of characters in name "
+                            "and city is no longer than 70.<br>Then please try again!"])
             pid = cursor.lastrowid  # get person id
         except Exception as e:
             if cursor:
@@ -709,7 +712,8 @@ def add_person():
     if movie == '':  # no movie to add, se we're done
         if cursor:
             cursor.close()
-        return json.dumps(["The given data was successfully saved!"])
+        return json.dumps(["The data on the personality was successfully saved!<br>Nothing related the movie was "
+                           "added."])
     # get movies parameters
     job = arg["job"] if "job" in keys else '0'  # actor is default job
     genres = arg["genres"] if "genres" in keys else ''
@@ -719,7 +723,8 @@ def add_person():
     if rows < 1:  # if failed inserting
         if cursor:
             cursor.close()
-        return json.dumps(["The movie insertion went wrong, please try again!"])
+        return json.dumps(["The name of the movie is too long, please check that the length is smaller then 105 "
+                           "characters"])
     movie_id = cursor.lastrowid  # get movie id
     # add person movie
     if not job:
