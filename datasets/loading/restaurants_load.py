@@ -95,6 +95,8 @@ def load(db, path):
             rests[rest][1] = loc_dict[rests[rest][1]]
         else:
             rests[rest][1] = "-1"
+        if "," in rests[rest][4]:
+            rests[rest][4] = rests[rest][4].split(",")[0]
     final_rests = []
     for rest in range(len(rests)):
         if rests[rest][1] != "-1" and rests[rest][1] is not None:

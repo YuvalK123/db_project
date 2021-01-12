@@ -258,9 +258,9 @@ $(document).ready(()=>{
                             'countries':wordOrg,
                             'letters':Array.from([]).join(','),
                             'strikes':mistakes,
-                            'score':points,
+                            'score':+points+100,
                             'uid':uid,
-                            'hints':(usedHints+1)
+                            'hints':(usedHints-1)
                         },
                     url: "http://"+url+":"+port+"/savegame", 
                     success: function (data) {
