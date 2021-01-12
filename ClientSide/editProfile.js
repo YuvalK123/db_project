@@ -56,8 +56,6 @@ $(document).ready(()=>{
         } else {
             my_url = "http://"+url+":"+port+'/update_user?uid=' + uid +'&pass=' + pass
         }
-        console.log(my_url)
-        console.log(123)
         $.ajax({
             type: 'POST',
             contentType: "application/json; charset=utf-8",
@@ -65,6 +63,8 @@ $(document).ready(()=>{
             success: function (data) {
                 console.log(data)
                 if (data > 0){
+                    prev_user = user
+                    prev_pass = pass
                     $("#updateMsg").html("Your changes were successfully saved!");
                 }
                 else{
@@ -78,6 +78,8 @@ $(document).ready(()=>{
             }
         });
     }
+    $("#updateMsg").html("You need to make some changes first..");
+    $("#updateMsg").show();
     });
 
     $("#menu").click(()=>{

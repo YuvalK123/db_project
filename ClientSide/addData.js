@@ -53,16 +53,16 @@ $(document).ready(()=>{
             data: JSON.stringify(obj),
             url: "http://"+url+":"+port+'/add_person',
             success: function (data) {
-                if (data > 0) {
-                    $("#addDataMsg").html("data was successfully saved!");
+            console.log(data)
+                if ((typeof data[0]) == 'string') {
+                    $("#addDataMsg").html(data[0]);
                     $("#addDataMsg").show();
                 } else {
-                    $("#addDataMsg").html("Something went wring..<br>Please make sure that Name of personality and at least one of the cities are not empty and try again!");
+                    $("#addDataMsg").html("Problem connecting to the server, please try again...");
                     $("#addDataMsg").show();
                 }
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
-            console.log(textStatus)
                 $("#addDataMsg").html("Problem connecting to the server, please try again...");
                 $("#addDataMsg").show();
             }
