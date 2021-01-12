@@ -3,16 +3,21 @@ from server_helper import *
 
 @app.route('/bestScores')
 def get_best_scores():
+    """
+
+    :return: error if failed, best scores if succeeded
+    """
     cursor = None
     try:
         cursor = db.cursor()
         query_best_10_scores = "SELECT users.username, score_history.score, score_history.datetime FROM " \
-                               "score_history, users WHERE score_history.uid=users.id ORDER BY score DESC LIMIT 10;"
+                               "score_history, users WHERE score_history.uid=users.id ORDER BY score " \
+                               "DESC LIMIT 10;"
         cursor.execute(query_best_10_scores)
         result = cursor.fetchall()
-        cursor.close()
-        return json.dumps(result, default=datetime_tostring)
-    except Exception as e:
+        cursor.close()  # close resource
+        return json.dumps(result, default=datetime_tostring)  # return best scores
+    except Exception as e:  # failed
         print(e)
         if cursor:
             cursor.close()
@@ -21,6 +26,9 @@ def get_best_scores():
 
 @app.route('/admin/best_score')
 def get_best_score():
+    """
+    function returns the best score of the game
+    """
     cursor = None
     try:
         cursor = db.cursor()
@@ -28,12 +36,12 @@ def get_best_score():
                            "score, datetime FROM score_history) AS best_score WHERE users.id = " \
                            "best_score.uid;"
         cursor.execute(best_score_query)
-        result = cursor.fetchall()
-        cursor.close()
-        if len(result) == 1:
+        result = cursor.fetchall()  # get record
+        cursor.close()  # close resources
+        if len(result) == 1:  # if there's results
             message = f"{result[0][0]} has the highest score which is {result[0][1]} since {result[0][2]}.\n"
             return message
-        else:
+        else:  # no results
             return "0 games were ended"
     except Exception as e:
         print(e)
@@ -117,50 +125,54 @@ def get_gender_statistics():
 
 @app.route('/hint')
 def server_hints():
+    """
+    get hints
+    :return: hints
+    """
     country, user = request.args.get('country'), request.args.get('user')
-    is_new = request.args.get("new")
+    is_new = request.args.get("new")  # if a new game
     fail = {"result": False, "data": "Database Connection lost"}
-    if not (user or country):
+    if not (user or country):  # invalid input
         fail["data"] = "invalid input"
         return fail
     try:
         cursor = db.cursor()
     except Exception as e:
         return DatabaseError(e)
-    if not is_new:
+    if not is_new:  # if an existing game
         hints_query = f"SELECT hints FROM games WHERE uid={user}"
-        hints = select_query(query=hints_query, is_many=False, cursor=cursor)
+        hints = select_query(query=hints_query, is_many=False, cursor=cursor)  # get number of hints
         if not hints:
             fail["data"] = "[No Available Hint]"
             return fail
         amount = hints[0]
-    else:
+    else:  # if new game - get 3 hints
         amount = 3
     country = country_to_id(cursor=cursor, country=country)
-    if amount < 1:
+    if amount < 1:  # no available hints
         cursor.close()
         return "No Available Hint"
-    # query, keyword = get_from_option(option, country)
-    hints_list = get_hints(country, amount, cursor=cursor)
+
+    hints_list = get_hints(country, amount, cursor=cursor)  # get hints
     hints = []
     born_count, died_count, rests_count = len(hints_list["born"]), len(hints_list["died"]), \
-                                            len(hints_list["rests"])
-    if born_count > 0:
+                                            len(hints_list["rests"])  # get how many hints of each type
+    if born_count > 0:  # if there are born locations
         i = 0
         for hint in hints_list["born"]:
             hints.append(hint)
             i += 1
-            cond_a, cond_b = i >= amount, (i >= (amount - 1) and died_count > 0)
+            cond_a, cond_b = i >= amount, (i >= (amount - 1) and died_count > 0)  # if we can use died hint
             if cond_a or cond_b:
                 break
-    if died_count and len(hints) < amount:
+    if died_count and len(hints) < amount:   # if there are died locations, and needed more hints
         i = 0
         for hint in hints_list["died"]:
             hints.append(hint)
             i += 1
             if i >= amount:
                 break
-    if rests_count and len(hints) < amount:
+    if rests_count and len(hints) < amount:  # if we need more hints, and there are available
         i = 0
         for hint in hints_list["rests"]:
             hints.append(hint)
@@ -175,12 +187,15 @@ def server_hints():
 
 @app.route('/get_country')
 def get_random_country(user=None):
+    """
+    :param user: user id - from new game
+    :return: a random country the user didnt visit
+    """
     if not user:
         user = request.args.get(GAME_PARAMETERS["user"])
     query = f"SELECT location FROM locations WHERE id NOT IN " \
             f"(SELECT location FROM game_locations WHERE gid=(SELECT id FROM games WHERE uid={user} LIMIT 1)) " \
             f"ORDER BY RAND() LIMIT 1;"
-    # query = "SELECT location FROM locations ORDER BY RAND() LIMIT 1"
     cursor = None
     try:
         cursor = db.cursor()
@@ -201,10 +216,11 @@ def get_person_movies():
     person = request.args.get('person')
     ret = {"gender": "", "actedIn": [], "directed": []}
     cursor = None
-    if not person:
+    if not person:  # if there is not person to get data about
         return json.dumps(None)
     try:
         cursor = db.cursor()
+        # get person gender and id
         query = f"SELECT id, gender FROM people_info WHERE Name='{person}' LIMIT 1"
         cursor.execute(query)
         record = cursor.fetchone()
@@ -212,16 +228,18 @@ def get_person_movies():
             cursor.close()
             return json.dumps(None)
         pid, ret["gender"] = record
-        # get all movies
+        # get all his/her movies
         query = f"SELECT movieId, job_id FROM people_movies WHERE pid={pid}"
         cursor.execute(query)
         record = cursor.fetchall()  # ((301,0/1), (555,0/1),...)
         if not record:
             cursor.close()
             return json.dumps(None)
+        # check for directed movies and acted movies
         actor_id, directors_id = "00", "01"
         actor_movies = tuple((x[0]) for x in record if actor_id in str(x[1]))
         director_movies = tuple(str(x[0]) for x in record if directors_id in str(x[1]))
+        # get person movies by [{movie:[genres]},...]
         if len(actor_movies) > 0:
             ret["actedIn"] = movies_record_to_list(movies_idx=actor_movies, cursor=cursor)
         if len(director_movies) > 0:
@@ -237,6 +255,7 @@ def get_person_movies():
 
 @app.route('/get_people')
 def get_all_related():
+    # setup queries
     country, cursor = request.args.get('country'), None
     born_query = f"SELECT Name FROM people_info WHERE BornIn IN " \
                  f"(SELECT id FROM locations WHERE location='{country}');"
@@ -246,16 +265,20 @@ def get_all_related():
                   f"(SELECT id FROM locations WHERE location='{country}');"
     try:
         cursor = db.cursor()
+        # handle born countries
         cursor.execute(born_query)
         born_country = cursor.fetchall()
         born_country = [x[0] for x in born_country]
+        # handle died countries
         cursor.execute(died_query)
         died_country = cursor.fetchall()
         died_country = [x[0] for x in died_country]
+        # handle restaurants
         cursor.execute(rests_query)
         rests_country = cursor.fetchall()
         rests_country = list(rests_country)
         rests_count = [len(rests_country)]
+        # get restaurants name, location and url
         for x in range(len(rests_country)):
             rests_country[x] = list(rests_country[x])
             (rests_country[x])[1] = str((rests_country[x])[1])
@@ -277,8 +300,12 @@ def get_all_related():
 
 @app.route('/users', methods=['GET', 'POST'], )
 def users():
+    """
+    POST function to register, GET function for login, to get user id and if admin
+    :return: user id and if admin
+    """
     username, psw = request.args.get('user'), request.args.get('pass')
-    uid, is_admin = -1, False
+    uid, is_admin = -1, False  # default values
     try:
         cursor = db.cursor()
     except Exception as e:
@@ -288,13 +315,14 @@ def users():
         # check if username exists
         cursor.execute(f"SELECT * FROM users WHERE username = '{username}'")
         rows_returned = len(cursor.fetchall())
-        if rows_returned == 1:
+        if rows_returned > 0:
+            cursor.close()
             return json.dumps(["username already exists! please try a different one and try again!"])
         # username does not exist
         query = f"INSERT INTO users (username, password, age, gender) VALUES " \
                      f"('{username}', '{psw}', '{age}', '{gender}');"
         val = insert_query(query=query, cursor=cursor)
-        if val == 0:
+        if val < 1:  # if failed to insert
             cursor.close()
             return json.dumps(["Please check that your username is no longer than 20 characters and password is no "
                                "longer than 25 characters.Then, please try again!"])
@@ -303,12 +331,12 @@ def users():
         record = cursor.fetchone()
         if record:
             uid = record[0]
-    else:
+    else:  # GET function
         try:
             query = f"SELECT id FROM users WHERE (username='{username}' AND password='{psw}') LIMIT 1;"
             cursor.execute(query)
             record = cursor.fetchone()
-            if record:
+            if record:  # if found user
                 uid = record[0]
                 r = check_if_admin(uid, cursor=cursor)
                 if r:
@@ -322,27 +350,33 @@ def users():
 
 @app.route('/getgame', methods=['GET'])
 def get_game():
+    """
+    :return: ret_value
+    """
     user, cursor = request.args.get(GAME_PARAMETERS["user"]), None
     ret_value = {"score": None, "letters": None, "curr_country": None, "strikes": None, "gid": None, "hints": None}
     try:
         cursor = db.cursor()
         query = f"SELECT id, current_score, strikes, hints, current_location FROM games WHERE uid='{user}';"
-        rows = cursor.execute(query)
+        rows = cursor.execute(query)  # get game relevant values
         game_record = cursor.fetchone()
-        if not game_record:
+        if not game_record:  # if failed to get game
             cursor.close()
             return json.dumps(None)
+        # dump game_record values
         ret_value["gid"], ret_value["score"], ret_value["strikes"], ret_value["hints"], ret_value["curr_country"] = \
             game_record
+        # get current country id
         ret_value["curr_country"] = id_to_country(cursor=cursor, country_id=ret_value["curr_country"])
         game_id = ret_value["gid"]
+        # get game letters
         query = f"SELECT letter FROM game_letter WHERE gid={game_id}"
         cursor.execute(query)
         letters_records = cursor.fetchall()
         if letters_records:
             letters = [letter[0] for letter in letters_records]
             ret_value["letters"] = ",".join(letters)
-        cursor.close()
+        cursor.close()  # close resources
     except Exception as e:
         print(e)
         if cursor:
@@ -353,24 +387,32 @@ def get_game():
 
 @app.route('/gameover')
 def delete_game(game_id=None):
-    if not game_id:
+    """
+
+    :param game_id: game id, for newgame use
+    :return: if succeeded to delete game
+    """
+    if not game_id:  # if from client
         game_id = request.args.get(GAME_PARAMETERS["game"])
     try:
         cursor = db.cursor()
     except Exception as e:
         print(e)
         return DatabaseError(e)
-    count = count_records("games", cursor=cursor, where=f"id={game_id}")
-    if count < 1:
+    count = count_records("games", cursor=cursor, where=f"id={game_id}")  # get game
+    if count < 1:  # if there is not game
         return -1
+    # delete game letters
     letters_query = f"DELETE FROM game_letter WHERE gid={game_id}"
     rows = delete_query(query=letters_query, cursor=cursor, to_commit=False)
     if rows < 0:  # failed delete
         return -1
+    # delete game locations
     locations_query = f"DELETE FROM game_locations WHERE gid={game_id}"
     rows = delete_query(query=locations_query, cursor=cursor)
     if rows < 0:  # failed delete
         return -1
+    # save score in score_history
     score_query = f"SELECT uid, current_score FROM games WHERE id={game_id}"
     score = select_query(query=score_query, cursor=cursor, is_many=False)
     if score:
@@ -379,6 +421,7 @@ def delete_game(game_id=None):
         score_query = f"INSERT INTO score_history (uid, score, datetime) VALUES " \
                       f"({score[0]}, {score[1]}, '{dt_string}'); "
         rows = insert_query(query=score_query, cursor=cursor)
+    # delete game
     game_query = f"DELETE FROM games WHERE id={game_id}"
     rows = delete_query(query=game_query, cursor=cursor)
     cursor.close()
@@ -389,40 +432,44 @@ def delete_game(game_id=None):
 
 @app.route('/user_country')
 def users_countries():
+    """
+    :return: all user saved locations
+    """
     uid, cursor = request.args.get('uid'), None
     country_range = request.args.get('range')
     fail = {"result": False, "data": "Database Connection lost"}
-    if not uid:
+    if not uid:  # if invalid input
         return json.dumps(fail)
-    if country_range:
+    if country_range:  # if there's a range - make sure it's legal, and set local variables
         country_range = country_range.split(",")
         start_range, end_range = int(country_range[0]), int(country_range[1])
         min_range, max_range = min(start_range, end_range),  max(start_range, end_range)
-    else:
+    else:  # if no range - default range is the first 50
         min_range, max_range = 0, 50
     ret = {"count": None, "locations": None}
     try:
         cursor = db.cursor()
         is_admin = check_if_admin(uid, cursor=cursor)
+        # handle max range and max_id - max id that we want to get from locations
         if is_admin:
-            max_id = count_records(cursor=cursor, table="locations")
-            max_range = min(max_range, max_id)
+            max_id = count_records(cursor=cursor, table="locations")  # get number of locations in general
+            max_range = min(max_range, max_id)  #
             query = f"SELECT location FROM locations WHERE id BETWEEN {min_range} AND {max_range};"
         else:
             max_id = count_records(table="user_locations", where=f"uid={uid}", cursor=cursor)
-            if max_id < 0:
+            if max_id < 0:  # if failed to count
                 cursor.close()
                 return json.dumps(fail)
 
-            if max_id < min_range:
+            if max_id < min_range:  # if range is below min_range - get first max_id
                 max_range = max_id
                 min_range = 0
             query = f"SELECT location FROM locations WHERE id IN (SELECT location FROM user_locations " \
                     f"WHERE uid={uid}) LIMIT {min_range}, {max_range};"
-        ret["count"] = max_id
-        rows = cursor.execute(query)
+        ret["count"] = max_id  # count how many locations the user has
+        rows = cursor.execute(query)  # get locations
         records = cursor.fetchall()
-        if records:
+        if records:  # if there are locations
             places = [x[0] for x in records if x[0] != '']
             locations = ",".join(places)
             ret["locations"] = locations
@@ -437,13 +484,17 @@ def users_countries():
 
 @app.route('/newgame')
 def new_game():
+    """
+    function deletes old game (if exists) and returns a random country
+    :return: random location
+    """
     uid = request.args.get("uid")
     fail = {"result": False, "data": "Invalid Input"}
-    if not uid:
+    if not uid:  # if we didn't recieve uid - we cant make a new game
         return json.dumps(fail)
     query = f"SELECT id FROM games WHERE uid={uid}"
     gid = select_query(query, is_many=False)
-    if gid:
+    if gid:  # if there is a game
         delete_game(gid[0])
     country = get_random_country(uid)
     return country
@@ -451,11 +502,16 @@ def new_game():
 
 @app.route('/savegame', methods=['POST'])
 def save_game():
+    """
+    POST function - save game
+    :return: game id
+    """
     try:
         cursor = db.cursor()
     except Exception as e:
         return DatabaseError(e)
     parameters = GAME_PARAMETERS
+    # get parameters
     args = request.form
     curr_location, countries, letters, strikes, score, user, hints = \
         parameters["curr_country"], parameters["countries"], parameters["letters"], \
@@ -464,56 +520,55 @@ def save_game():
     curr_location, countries, letters, strikes, score, user, hints = \
         args[curr_location], args[countries], args[letters], args[strikes], args[score], args[user], args[hints]
 
-    # print(curr_location, countries, letters, strikes, score, user)
-    if str(curr_location) != "0":
+    if str(curr_location) != "0":  # if country - get its id
         curr_location = country_to_id(country=curr_location, cursor=cursor)
-    else:
+    else:  # no country - insert null
         curr_location = "NULL"
-    # print("curr location", curr_location)
-    get_query = f"SELECT id FROM games WHERE uid={user};"
+    get_query = f"SELECT id FROM games WHERE uid={user};"  # get game id
     cursor.execute(get_query)
     game_record = cursor.fetchone()
     game_exists, game_id = False, -1
-    # print(game_record)
-    if game_record:
+
+    if game_record:  # if found game - games exists, anf set game_id
         game_exists = True
         game_id = game_record[0]
-    if not game_exists:
-        hints = max(0,3-int(hints))
+    if not game_exists:  # if game not found - its a new game
+        hints = max(0, 3-int(hints))
         game_query = f"INSERT INTO games (uid, current_score, strikes, hints, current_location) VALUES " \
                 f"({user}, {score}, {strikes}, {hints}, {curr_location});"
         insert_rows = insert_query(query=game_query, cursor=cursor)
-    else:
+    else:  # if game exists -  we want to update it
         game_query = f"UPDATE games SET current_score = {score}, strikes = {strikes}," \
                 f"current_location = {curr_location} WHERE uid={user};"
-        update_rows = update_query(query=game_query, cursor=cursor)
-        update_hints(uid=user, amount=hints, relative_amount=True, cursor=cursor)
-        delete_letters = f"DELETE FROM game_letter WHERE gid={game_id};"
+        update_rows = update_query(query=game_query, cursor=cursor)  # update game
+        update_hints(uid=user, amount=hints, relative_amount=True, cursor=cursor)  # update hints
+        delete_letters = f"DELETE FROM game_letter WHERE gid={game_id};"  # delete all letters
         rows = delete_query(query=delete_letters, cursor=cursor)
-    if not game_exists:
+    if not game_exists:  # if game didn't exist - it exists now, and we want it's id
         cursor.execute(get_query)
         game_record = cursor.fetchone()
         game_id = game_record[0]
     # insert letters and locations
-    # letters_arr, locations = letters.split(","), countries.split(",")
+    # setup letters and locations
     letters_arr = letters.split(",") if letters != "" else []
     locations = countries.split(",") if countries != "" else []
     letters_arr = [(game_id, letter) for letter in letters_arr]
     try:
-        if len(letters_arr) > 0:
+        if len(letters_arr) > 0:  # insert letters
             query = "INSERT INTO game_letter (gid, letter) VALUES (%s, %s);"
             insert_query(query=query, execmany=letters_arr, cursor=cursor)
             # cursor.executemany(query, letters_arr)
-        if len(locations) > 0:
+        if len(locations) > 0:  # insert game locations and user locations
             locations_idx = countries_to_ids(locations, cursor=cursor)
             locations = [(game_id, location) for location in locations_idx if location is not None]
             query = "INSERT INTO game_locations (gid, location) VALUES (%s, %s);"
             # cursor.executemany(query, locations)
             insert_query(query=query, execmany=locations, cursor=cursor)
             is_admin = check_if_admin(user, cursor=cursor)
-            if not is_admin:
+            if not is_admin:  # if admin - we don't need to save it's visited locations
+                # get all new locations
                 user_locations = filter_countries(locations_idx, user, cursor=cursor)
-                if len(user_locations) > 0:
+                if len(user_locations) > 0:  # if there's a new location
                     query = f"INSERT INTO user_locations (uid, location) VALUES (%s, %s)"
                     locations = [(user, location) for location in user_locations if location is not None]
                     insert_query(query=query, execmany=locations, cursor=cursor)
@@ -529,6 +584,9 @@ def save_game():
 
 @app.route('/update_hints')
 def use_hint():
+    """
+    function updates hints for user by hints amount
+    """
     uid, hints = request.args.get("user"), request.args.get("hints")
     if not hints:
         hints = -1
@@ -539,39 +597,42 @@ def use_hint():
 @app.route('/update_user', methods=['POST', 'GET'])
 def update_user():
     """
+    POST for updating user, GET for getting details
     requires uid, and username to change username, pass to change password
     """
     global db
     cursor = None
     if request.method == 'POST':
+        # get params
         username, psw, uid = request.args.get("username"), request.args.get("pass"), request.args.get("uid")
         ret_val = -1
+        # create query by params
         if username and psw:  # update username and password
             query = f"UPDATE users SET username = '{username}', password = '{psw}' WHERE id={uid};"
         elif username:  # update username
             query = f"UPDATE users SET username = '{username}' WHERE id={uid};"
         elif psw:
             query = f"UPDATE users SET password = '{psw}' WHERE id={uid};"
-        else:
+        else:  # no values to update
             return str(ret_val)
-        try:
+        try:  # update
             cursor = db.cursor()
             ret_val = update_query(query=query, cursor=cursor)
-        except Exception as e:
+        except Exception as e:  # failed connecting
             print(e)
         if cursor:
             cursor.close()
         return str(ret_val)
-    else:
+    else:  # GET call - get user details
         query = f"SELECT username, password, age, gender FROM users WHERE users.id = {request.args.get('uid')};"
         try:
             cursor = db.cursor()
             cursor.execute(query)
             result = cursor.fetchall()
-            if len(result) == 0:
-                return {}
             if cursor:
                 cursor.close()
+            if len(result) == 0:
+                return {}
             return json.dumps(result[0], default=str)
         except Exception as e:
             print(e)
@@ -582,7 +643,10 @@ def update_user():
 
 @app.route('/get_genres')
 def get_all_genres():
-    query = "SELECT genre FROM genres"
+    """
+    :return: all genres strings from db
+    """
+    query = "SELECT DISTINCT genre FROM genres"
     records = select_query(query=query, is_many=True)
     if records:
         records = [x[0] for x in records]
@@ -591,32 +655,37 @@ def get_all_genres():
 
 @app.route('/add_person', methods=['POST'])
 def add_person():
+    """
+    function adds a person to DB
+    """
     arg = request.json
-    print(arg)
     keys = arg.keys()
     try:
         cursor = db.cursor()
-    except Exception as e:
+    except Exception as e:  # connection problems
         print("problem connecting", e)
         return json.dumps([500])
-    name = arg["name"] if "name" in keys else ''
-    if name == '':
+    name = arg["name"] if "name" in keys else ''  # get name
+    if name == '':  # if there's no name - invalid input
         if cursor:
             cursor.close()
         return json.dumps(["Name of personality was not given"])
+    # check if name exists
     does_exist = select_query(query=f"SELECT id FROM people_info WHERE name='{name}'",
                               is_many=False, cursor=cursor)
-    if not does_exist:
+    if not does_exist:  # if person doesn't exist
+        # get parameters
         bornin = arg['bornin'] if 'bornin' in keys else None
         diedin = arg['diedin'] if 'diedin' in keys else None
         gender = arg['gender'] if 'gender' in keys else 'f'
-        if not (bornin or diedin):
+        if not (bornin or diedin):  # if not locations, invalid input
             if cursor:
                 cursor.close()
             return json.dumps(["At least one location must be given!<br>After inserting the data please try again!"])
         # insert to people_info
         born = add_location(bornin, cursor=cursor) if bornin else "NULL"
         died = add_location(diedin, cursor=cursor) if bornin else "NULL"
+        # set query according to input
         if bornin and diedin:
             person_query = f"INSERT INTO people_info (name, gender, BornIn, DiedIn) VALUES ('{name}', '{gender}', " \
                            f"{born}, {died});"
@@ -626,32 +695,32 @@ def add_person():
         else:  # if only died in
             person_query = f"INSERT INTO people_info (name, gender, DiedIn) VALUES ('{name}', '{gender}', " \
                            f"{died});"
-        pid = -1
-        try:
+        try:  # insert person
             rows = insert_query(query=person_query, cursor=cursor)
-            pid = cursor.lastrowid
+            pid = cursor.lastrowid  # get person id
         except Exception as e:
             if cursor:
                 cursor.close()
             return json.dumps([500])
-    else:
-        pid = does_exist[0]
-    # no movie to add, se we're done
+    else:  # if person exists in db - we dont want to add it, but it's details
+        pid = does_exist[0]  # person id
+
     movie = arg["movie"] if "movie" in keys else ''
-    if movie == '':
+    if movie == '':  # no movie to add, se we're done
         if cursor:
             cursor.close()
         return json.dumps(["The given data was successfully saved!"])
-    job = arg["job"] if "job" in keys else '0'
+    # get movies parameters
+    job = arg["job"] if "job" in keys else '0'  # actor is default job
     genres = arg["genres"] if "genres" in keys else ''
     # add movie
     movie_query = f"INSERT INTO movies (movieName) VALUES ('{movie}')"
     rows = insert_query(query=movie_query, cursor=cursor)
-    if rows < 1:
+    if rows < 1:  # if failed inserting
         if cursor:
             cursor.close()
         return json.dumps(["The movie insertion went wrong, please try again!"])
-    movie_id = cursor.lastrowid
+    movie_id = cursor.lastrowid  # get movie id
     # add person movie
     if not job:
         job = '0'  # actor by default
@@ -659,20 +728,21 @@ def add_person():
         query = f"INSERT INTO people_movies (pid, movieId, job_id) VALUES ({pid}, {movie_id}, {job});"
         rows = insert_query(query=query, cursor=cursor)
     # if movie has no genres, return person's id
-    if not genres:
+    if not genres:  # not genres
         if cursor:
             cursor.close()
         return json.dumps(["The given data was successfully saved!"])
-    if len(genres) <= 0:
+    if len(genres) <= 0:  # no genres
         if cursor:
             cursor.close()
         return json.dumps(["The given data was successfully saved!"])
     # add genres
     # genres = [genres list]
-    genres_str = ", ".join([f"'{g}'" for g in genres])
+    genres_str = ", ".join([f"'{g}'" for g in genres])  # setup genres to query
     query = f"SELECT id FROM genres WHERE genre IN ({genres_str});"
+    # get all movie genres id for insertion
     genres_ids = select_query(query=query, cursor=cursor, is_many=True)
-    if genres_ids:
+    if genres_ids:  # if found genres id
         genres_values = [(movie_id, g) for g in genres_ids]
         insert = f"INSERT INTO movies_genres (movieId, genreId) VALUES (%s, %s)"
         rows = insert_query(query=insert, cursor=cursor, execmany=genres_values)

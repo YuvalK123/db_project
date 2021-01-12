@@ -3,15 +3,17 @@ var port = 3000;
 var fetchIndex = 0;
 var maxCount = 0;
 $(document).ready(()=>{
+    // get parametesrs.
     var uid = $.urlParam("uid")
      if(uid == null){
          window.location = "./"
      }
     var user = $.urlParam("user")
     $("#welcome").html("Welcome "+user+"!");
-
+    // when a place is clicked.
     $(document).on("click",".loc",(ev)=>{
         wordOrg = $(ev.target).html()
+        // get data about the place.
         $.ajax({ 
             type: 'GET', 
             contentType: "application/json; charset=utf-8",
@@ -25,11 +27,11 @@ $(document).ready(()=>{
                 dataModelParser(data);
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
-    
+                 alert("Problem connecting to the server, please try again...");
             }  
         });
     })
-
+        // show all and less buttons cliced more or less data show
         $("#showallborn").click((ev) => {
         if ($(ev.target).html().includes("show all")) {
             for (var k = 5; k < born.length; k++) {
@@ -45,7 +47,7 @@ $(document).ready(()=>{
             $(ev.target).html("show all");
         }
     });
-
+// show all and less buttons cliced more or less data show
     $("#showalldied").click((ev) => {
         if ($(ev.target).html().includes("show all")) {
             for (var k = 5; k < died.length; k++) {
@@ -62,6 +64,7 @@ $(document).ready(()=>{
         }
     });
 
+// show all and less buttons cliced more or less data show
     $("#showallrests").click((ev) => {
 
         if ($(ev.target).html().includes("show all")) {
@@ -81,6 +84,7 @@ $(document).ready(()=>{
         }
     });
 
+    // load more cities if available.
     $("#showMore").click(()=>{
         if(fetchIndex+50 < maxCount){
             $.ajax({ 
@@ -89,6 +93,7 @@ $(document).ready(()=>{
                 url: "http://"+url+":"+port+'/user_country?uid='+uid+"&range="+fetchIndex+","+(fetchIndex+50), 
                 success: function (data) {
                     if(data){
+                        // add to the screen.
                         data = JSON.parse(data)
                         var count = data.count;
                         fetchIndex +=50
@@ -99,7 +104,7 @@ $(document).ready(()=>{
                     }
                 },
                 error: function(XMLHttpRequest, textStatus, errorThrown) {
-        
+                         alert("Problem connecting to the server, please try again...");
                 }  
             });
         
@@ -107,7 +112,7 @@ $(document).ready(()=>{
 
     });
     
-
+    // get the locations list.
     $.ajax({ 
         type: 'GET', 
         contentType: "application/json; charset=utf-8",
@@ -118,6 +123,7 @@ $(document).ready(()=>{
                 
                 fetchIndex = 50;
                 maxCount = data.count;
+                // if there is more to ask for.
                 if(maxCount > 50){
                     $("#showMore").show()
                 }
@@ -125,6 +131,7 @@ $(document).ready(()=>{
                     $("#showMore").hide()
                 }
                 data = data.locations.split(",")
+                // adding to the screen.
                 for (var t=0;t<data.length;t++){
                     $("#locations").append("<p style=\"font-size: 18px;\">&#9675; <b ><a href='#' class='loc' style='color:white'>"+data[t]+"</a></b></p>");
                 }
@@ -135,6 +142,7 @@ $(document).ready(()=>{
         }  
     });
 
+    // back to main menu.
     $("#menu").click(()=>{
         var admin = $.urlParam("admin")
         window.location = "./MainMenu.html?uid="+uid+"&user="+user+"&admin="+admin
@@ -155,7 +163,7 @@ function dataModelParser(data) {
     $("#showalldied").html("show all");
     $("#showallrests").html("show all");
 
-
+     // showing the relevent data to the screen
     info = data;
     info.born = info.born ? info.born : "";
     born = info.born.split(",");
@@ -170,7 +178,7 @@ function dataModelParser(data) {
         $("#bornSpan").hide();
     }
 
-
+// showing the relevent data to the screen
     info.died = info.died ? info.died : "";
     died = info.died.split(",");
     if (info.died.length > 0) {
@@ -183,6 +191,7 @@ function dataModelParser(data) {
         $("#diedSpan").hide();
     }
 
+// showing the relevent data to the screen
     info.rests = info.rests ? info.rests : "";
     rests = info.rests.split(",");
     if (info.rests.length > 0) {
@@ -198,6 +207,7 @@ function dataModelParser(data) {
         $("#restsSpan").hide();
     }
 
+    // checking if there is more data to show.
     if (born.length < 5) {
         $("#showallborn").hide();
     }
@@ -209,7 +219,7 @@ function dataModelParser(data) {
     if (rests.length < 5) {
         $("#showallrests").hide();
     }
-
+    // showing how much resturns there is in the city.
     count = info.restsCount;
     if(count > 0){
         $("#restsCount").html("There are "+ count +" restaurants in the city of "+wordOrg+"!" )
@@ -218,7 +228,7 @@ function dataModelParser(data) {
 }
 
 
-
+// get the parameters from the url.
 $.urlParam = function(name){
     var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
     if (results==null) {
