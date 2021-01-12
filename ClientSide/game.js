@@ -257,7 +257,7 @@ $(document).ready(()=>{
                             'country':"0",
                             'countries':wordOrg,
                             'letters':Array.from([]).join(','),
-                            'strikes':mistakes,
+                            'strikes':mistakes+1,
                             'score':+points+100,
                             'uid':uid,
                             'hints':(usedHints+1)
