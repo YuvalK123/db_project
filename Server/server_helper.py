@@ -54,6 +54,12 @@ def get_hints(country, amount, cursor=None):
 
 
 def movies_record_to_list(movies_idx, cursor=None):
+    """
+    function gets movies indices, and return array of {movie:[genres]}
+    :param movies_idx: union of movie indices
+    :param cursor: of db
+    :return: array of {movie:[genres]}
+    """
     movies = ",".join(str(v) for v in movies_idx)
     acted_query = f"SELECT DISTINCT movies.movieName, genres.genre FROM movies, movies_genres, genres " \
                   f"WHERE movies.id = movies_genres.movieId AND movies_genres.genreId = genres.id and " \
@@ -72,6 +78,12 @@ def movies_record_to_list(movies_idx, cursor=None):
 
 
 def id_to_country(cursor=None, country_id=None):
+    """
+    function converts id to country string
+    :param cursor: db cursor
+    :param country_id: country id.
+    :return:
+    """
     if not country_id:
         return None
     query = f"SELECT Location FROM locations WHERE id={country_id}"
