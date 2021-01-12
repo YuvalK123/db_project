@@ -289,6 +289,7 @@ def users():
         cursor.execute(f"SELECT * FROM users WHERE username = '{username}'")
         rows_returned = len(cursor.fetchall())
         if rows_returned == 1:
+            cursor.close()
             return json.dumps(["username already exists! please try a different one and try again!"])
         # username does not exist
         query = f"INSERT INTO users (username, password, age, gender) VALUES " \
@@ -582,7 +583,7 @@ def update_user():
 
 @app.route('/get_genres')
 def get_all_genres():
-    query = "SELECT genre FROM genres"
+    query = "SELECT DISTINCT genre FROM genres"
     records = select_query(query=query, is_many=True)
     if records:
         records = [x[0] for x in records]
