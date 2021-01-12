@@ -441,10 +441,10 @@ function dataModelParser(data) {
     rests = info.rests.split(",");
     if (info.rests.length > 0) {
         for (var k = 0; k < rests.length; k++) {
-            rests[k] = rests[k].split(":")
+            rests[k] = rests[k].split(";")
         }
         for (var k = 0; k < Math.min(rests.length, 5); k++) {
-            $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps</a><br>");
+            $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps, </a><a target='_blank' href='"+rests[k][3]+"'>  Restaurant Website</a><br>");
         }
     }
     else {
@@ -503,14 +503,14 @@ function dataModelParser(data) {
     $("#showallrests").click((ev) => {
         if ($(ev.target).html().includes("show all")) {
             for (var k = 5; k < rests.length; k++) {
-                $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps</a><br>");    
+                $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps, </a><a target='_blank' href='"+rests[k][3]+"'>  Restaurant Website</a><br>");
             }
             $(ev.target).html("show less");
         }
         else {
             $("#restsinfo").empty();
             for (var k = 0; k < Math.min(rests.length, 5); k++) {
-                $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps</a><br>");
+                $("#restsinfo").append("<span>" + rests[k][0] + "</span><a target='_blank' href='https://www.google.co.il/maps/place/"+rests[k][1]+","+rests[k][2]+"'>  Location on Google Maps, </a><a target='_blank' href='"+rests[k][3]+"'>  Restaurant Website</a><br>");
     
             }
             $(ev.target).html("show all");

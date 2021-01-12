@@ -213,7 +213,7 @@ def get_all_related():
     country = request.args.get('country')
     born_query = f"SELECT Name FROM people_info WHERE BornIn=(SELECT id FROM locations WHERE location='{country}');"
     died_query = f"SELECT Name FROM people_info WHERE DiedIn=(SELECT id FROM locations WHERE location='{country}');"
-    rests_query = f"SELECT DISTINCT name,latitude,longitude FROM restaurants WHERE city_id=" \
+    rests_query = f"SELECT DISTINCT name,latitude,longitude,url FROM restaurants WHERE city_id=" \
                   f"(SELECT id FROM locations WHERE location='{country}');"
     rests_count_query = f"SELECT COUNT(name) FROM restaurants WHERE city_id=" \
                         f"(SELECT id FROM locations WHERE location='{country}');"
@@ -232,7 +232,8 @@ def get_all_related():
             rests_country[x] = list(rests_country[x])
             (rests_country[x])[1] = str((rests_country[x])[1])
             (rests_country[x])[2] = str((rests_country[x])[2])
-        rests_country = [":".join(x) for x in rests_country]
+            (rests_country[x])[3] = str((rests_country[x])[3])
+        rests_country = [";".join(x) for x in rests_country]
 
         cursor.execute(rests_count_query)
         rests_count = cursor.fetchall()

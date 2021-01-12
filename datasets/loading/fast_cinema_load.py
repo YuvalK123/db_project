@@ -1,9 +1,6 @@
 import mysql.connector as mysql
 import csv
 
-PASSWORD = "1q2w3E4R"
-DATABASE = "GlobalInfoApp"
-
 ########## Helper Functions  ############
 def dictionary_to_csv(data, file_name):
     """
@@ -11,6 +8,7 @@ def dictionary_to_csv(data, file_name):
     :param file_name: file name to write
     :return: None
     """
+    print(file_name)
     with open(file_name, 'w', encoding='utf-16') as file:
         writer = csv.writer(file)
         writer.writerows(data.items())
@@ -75,16 +73,14 @@ def get_mapping_table(query=" SELECT id, genre FROM genres "):
 
 def csv_to_dict(file_name):
     dic = {}
+    print(file_name)
+    print()
     with open(file_name, 'r', encoding="utf-16") as csv_file:
         reader = csv.reader(csv_file)
-        # row = next(reader)
-        # print(row)
         for row in reader:
-            # print(row)
             if len(row) == 0:
                 continue
             dic[row[0]] = row[1].strip("][").split(', ')
-    # print(dic)
     return dic
 #######################################################
 
@@ -208,7 +204,6 @@ def movies_genres_table(movies_genres, table_title="movies_genres"):
     try:
         cursor.execute(query)
         db.commit()
-        print("commited")
     except Exception as e:  # table was created or database connection
         print(e)
         pass
