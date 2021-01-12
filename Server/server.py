@@ -213,6 +213,9 @@ def get_random_country(user=None):
 
 @app.route('/movies')
 def get_person_movies():
+    """
+    get all the movies of the person, and their genres, and his gender
+    """
     person = request.args.get('person')
     ret = {"gender": "", "actedIn": [], "directed": []}
     cursor = None
@@ -255,6 +258,9 @@ def get_person_movies():
 
 @app.route('/get_people')
 def get_all_related():
+    """
+    GET function to get all related people and restaurants to the country
+    """
     # setup queries
     country, cursor = request.args.get('country'), None
     born_query = f"SELECT Name FROM people_info WHERE BornIn IN " \
@@ -652,7 +658,6 @@ def get_all_genres():
         records = [x[0] for x in records]
     return json.dumps(records)
 
-
 @app.route('/add_person', methods=['POST'])
 def add_person():
     """
@@ -697,10 +702,10 @@ def add_person():
                            f"{died});"
         try:  # insert person
             rows = insert_query(query=person_query, cursor=cursor)
-            if rows == 0:
+            if rows < 1:
                 cursor.close()
-                return json.dumps(["The given data was not updated!<br>Please check that the number of characters in name "
-                            "and city is no longer than 70.<br>Then please try again!"])
+                return json.dumps(["The given data was not updated!<br>Please check that the number of "
+                                   "characters in name and city is no longer than 70.<br>Then please try again!"])
 
             pid = cursor.lastrowid  # get person id
         except Exception as e:
