@@ -286,7 +286,7 @@ $(document).ready(()=>{
 
                     },
                     error: function(XMLHttpRequest, textStatus, errorThrown) {
-            
+                        alert("Problem connecting to the server, please try again...");
                     }  
                 });
 
@@ -309,7 +309,7 @@ $(document).ready(()=>{
 
                     },
                     error: function(XMLHttpRequest, textStatus, errorThrown) {
-            
+                        alert("Problem connecting to the server, please try again...");
                     }  
                 });
             }
@@ -330,7 +330,7 @@ $(document).ready(()=>{
                 dataModelParser(data);
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
-    
+                  alert("Problem connecting to the server, please try again...");
             }  
         });
         }
@@ -390,7 +390,7 @@ $(document).ready(()=>{
             usedHints = 0;
         },
         error: function(XMLHttpRequest, textStatus, errorThrown) {
-
+                        alert("Problem connecting to the server, please try again...");
         }  
     });
   });  

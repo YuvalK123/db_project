@@ -25,7 +25,7 @@ $(document).ready(()=>{
                 dataModelParser(data);
             },
             error: function(XMLHttpRequest, textStatus, errorThrown) {
-    
+                 alert("Problem connecting to the server, please try again...");
             }  
         });
     })
