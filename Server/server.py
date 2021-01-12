@@ -541,7 +541,6 @@ def get_all_genres():
 @app.route('/add_person', methods=['POST'])
 def add_person():
     arg = request.json
-    print(arg)
     keys = arg.keys()
     try:
         cursor = db.cursor()
