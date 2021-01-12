@@ -234,7 +234,7 @@ $(document).ready(()=>{
     
   $(document).on('click',".LettersOp",(event)=>{
     $(".LettersOp").removeClass("coloredBlue");
-    $(event.target).addClass("coloredBlue")
+    $(event.target).hide()
     wrongFlag = true;
     for(var i=0;i<hiddenWord.length;i++){
         if($(event.target).text() == hiddenWord[i][1]){
@@ -260,7 +260,7 @@ $(document).ready(()=>{
                             'strikes':mistakes,
                             'score':+points+100,
                             'uid':uid,
-                            'hints':(usedHints-1)
+                            'hints':(usedHints+1)
                         },
                     url: "http://"+url+":"+port+"/savegame", 
                     success: function (data) {
