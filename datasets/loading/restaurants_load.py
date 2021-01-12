@@ -56,8 +56,8 @@ def load(db, path):
         exit(6)
 
 
-    query = f"CREATE TABLE `restaurants` (`name` VARCHAR(256) NULL,`city_id` SMALLINT UNSIGNED NULL," \
-            f"`latitude` FLOAT NULL,`longitude` FLOAT NULL,  `url` VARCHAR(1000) NULL, " \
+    query = f"CREATE TABLE `restaurants` (`name` VARCHAR(60) NULL,`city_id` SMALLINT UNSIGNED NULL," \
+            f"`latitude` FLOAT NULL,`longitude` FLOAT NULL,  `url` VARCHAR(200) NULL, " \
             f"INDEX `fk1_idx` (`city_id` ASC) VISIBLE,  CONSTRAINT `fk1` FOREIGN KEY (`city_id`) " \
             f"REFERENCES `locations` (`id`) );"
     try:
