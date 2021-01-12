@@ -59,22 +59,20 @@ def csv_to_dict(file_name):
     dic = {}
     with open(file_name, 'r', encoding="utf-16") as csv_file:
         reader = csv.reader(csv_file)
-        # row = next(reader)
-        # print(row)
         for row in reader:
             # print(row)
             if len(row) == 0:
                 continue
             dic[row[0]] = row[1].strip("][").split(', ')
-    # print(dic)
     return dic
 #######################################################
 
 
-def pid_table(db, movies, id_val, table_title="people_movies"):
+def pid_table(db, cursor, movies, id_val, table_title="people_movies"):
     """
     function creates table with the given title for (pid, movieId)
     :param db: database connection
+    :param cursor: db cursor
     :param movies: dictionary {person: [movies],...}
     :param id_val: 0 if actor, 1 if director
     :param table_title: title of table
@@ -90,8 +88,8 @@ def pid_table(db, movies, id_val, table_title="people_movies"):
         cursor.execute(query)
         db.commit()
     except Exception as e:  # table created
-        print("e", e)
-        pass
+        if id_val == 0:
+            print("e", e)
     # gets pid and movieId
     id_name_query = " SELECT id, movieName FROM movies "
     cursor.execute(id_name_query)
@@ -131,16 +129,16 @@ def pid_table(db, movies, id_val, table_title="people_movies"):
         db.commit()
 
 
-def genres_table(db, genres):
+def genres_table(db, cursor, genres):
     """
     functions generates genres table
     :param db: database connection
+    :param cursor: db cursor
     :param genres: set of genres
     :return: None
     """
     genres_db = [(genre.strip("'"),) for genre in genres]
     max_len = len(max(genres, key=len)) + 10  # , key=lambda t: len(t)) + 10
-    cursor = db.cursor()
     query = f"CREATE TABLE genres (id TINYINT PRIMARY KEY NOT NULL AUTO_INCREMENT, genre VARCHAR({max_len}));"
     cursor.execute(query)
     db.commit()
@@ -155,19 +153,18 @@ def get_genres(movies_genres):
     for genre in movies_genres.values():
         for g in genre:
             genres.add(str(g))
-            # print("g", g, genres)
     return genres
 
 
-def movies_genres_table(db, movies_genres, table_title="movies_genres"):
+def movies_genres_table(db, cursor, movies_genres, table_title="movies_genres"):
     """
     :param db: database connection
     :param table_title: title of table
+    :param cursor: db cursor
     :param movies_genres: dictionary {movie: [genres], ...}
     :return: None
     """
     final_list = []
-    cursor = db.cursor()
     genres_map = get_mapping_table(db, "SELECT id, genre FROM genres")
     movies_maps = get_mapping_table(db, "SELECT id, movieName FROM movies")
     query = f"CREATE TABLE {table_title} (movieId MEDIUMINT, FOREIGN KEY(movieId) REFERENCES movies(id)," \
@@ -177,7 +174,6 @@ def movies_genres_table(db, movies_genres, table_title="movies_genres"):
         db.commit()
     except Exception as e:  # table was created or database connection
         print(e)
-        pass
     for movie, genres in movies_genres.items():
         genres_ids = genres_to_id(genres, genres_map)
         for g in genres_ids:
@@ -197,24 +193,27 @@ def genres_to_id(genres_to_conv, genres_map):
     return final_genres
 
 
-def movies_table(db, movies_genres):
+def movies_table(db, cursor, movies_genres):
     """
     functions creates movies table
     :param db: database connection
+    :param cursor: db cursor
     :param movies_genres: [(movie, [genres]), ...]
     :return: None
     """
-    cursor, keys = db.cursor(), movies_genres.keys()
+    keys = movies_genres.keys()
     values = [(name,) for name in keys]
     max_movie_len = len(max(values, key=lambda t: len(t[0]))[0]) + 10
     query = f"CREATE TABLE movies (id MEDIUMINT PRIMARY KEY NOT NULL AUTO_INCREMENT, " \
             f"movieName VARCHAR({max_movie_len}));"
-    print(max_movie_len, query)
     try:
         cursor.execute(query)
         db.commit()
-    except Exception as e:  # table exists
-        pass
+    except mysql.Error as e:
+        print(e)
+    except Exception as e:
+        print(e)
+        exit(5)
     query = "INSERT INTO movies (movieName) VALUES (%s);"
 
     cursor.executemany(query, values)
@@ -227,25 +226,26 @@ def load(db, path):
     movies_genres = csv_to_dict(movies_genres_path)
     genres = get_genres(movies_genres)
     # create genres table
-    genres_table(db, genres)
-    movies_table(db, movies_genres)
-    movies_genres_table(db, movies_genres)
-    pid_table(db, actors_movies, 0)
-    pid_table(db, directors_movies, 1)
-
-
-# def main():
-#     actors_movies_path, directors_movies_path = "actors_movies.csv", "directors_movies.csv"
-#     movies_genres_path = "people_genres.csv"
-#     directors_movies, actors_movies = csv_to_dict(directors_movies_path), csv_to_dict(actors_movies_path)
-#     movies_genres = csv_to_dict(movies_genres_path)
-#     genres = get_genres(movies_genres)
-#     # create genres table
-#     genres_table(genres)
-#     movies_table(movies_genres)
-#     movies_genres_table(movies_genres)
-#     pid_table(actors_movies)
-#     pid_table(directors_movies)
-
-# if __name__ == '__main__':
-#     main()
+    try:
+        cursor = db.cursor()
+    except mysql.Error as e:
+        print("Database connection error")
+        print(e)
+        return -1
+    except Exception as e:
+        print(e)
+        exit(5)
+    try:
+        genres_table(db, cursor, genres)
+        movies_table(db, cursor, movies_genres)
+        movies_genres_table(db, cursor, movies_genres)
+        pid_table(db, cursor, actors_movies, 0)
+        pid_table(db, cursor, directors_movies, 1)
+        cursor.close()
+    except mysql.Error as e:
+        print(e)
+        return -1
+    except Exception as e:
+        print(e)
+        exit(5)
+    return 1
