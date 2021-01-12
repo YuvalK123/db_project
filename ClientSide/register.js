@@ -23,8 +23,11 @@ $(document).ready(()=>{
         $("#registerErr").show();
     } else {
         var current_date = new Date()
-        if (current_date < new Date(age)) {
-            $("#registerErr").html("Please enter a valid age!");
+        var one_hundred_and_twenty_years_ago = new Date();
+        one_hundred_and_twenty_years_ago.setFullYear(one_hundred_and_twenty_years_ago.getFullYear() - 120);
+        var age_date = new Date(age)
+        if (current_date < age_date || one_hundred_and_twenty_years_ago > age_date) {
+            $("#registerErr").html("Please enter a valid birth date!");
             $("#registerErr").show();
         } else {
             $.ajax({
@@ -33,10 +36,10 @@ $(document).ready(()=>{
                 url: "http://"+url+":"+port+'/users?user=' + user + '&pass=' + pass + '&gender=' + gender + '&age=' + age,
                 success: function (data) {
                     data = JSON.parse(data)
-                    if ((typeof data[0]) != 'string'){
+                    if ((typeof data[0]) != 'string') {
                         window.location = "./MainMenu.html?uid="+data.uid+"&user="+user
                     }
-                    else{
+                    else {
                         $("#registerErr").html(data[0]);
                         $("#registerErr").show();
                     }
