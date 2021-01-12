@@ -5,7 +5,7 @@ $(document).ready(()=>{
     var person = $.urlParam("person");
     $("#nameActor").html(person)
 
-
+    // getting the data about the person.
      $.ajax({
          type: 'GET',
          contentType: "application/json; charset=utf-8",
@@ -13,11 +13,13 @@ $(document).ready(()=>{
          success: function (data) {
              
              if(data && data != "null"){
+             // checking if actor or director, abd gender.
                 data = JSON.parse(data)
                 acted = data.actedIn
                 directed = data.directed
                 gender = data.gender
                 $("#gen").html( (gender == "m")? "Male":"Female");
+                // showing the data to the screen.
                 for (var t=0;t<acted.length;t++){
                     $("#movies").append("<p style=\"font-size: 18px;\">&#9675; "+Object.keys(acted[t])+" - as Actor - "+acted[t][Object.keys(acted[t])].join(",")+"</p>")
                 }
@@ -32,7 +34,7 @@ $(document).ready(()=>{
      });
 })
 
-
+// get the parameters from the url.
 $.urlParam = function(name){
     var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
     if (results==null) {

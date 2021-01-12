@@ -24,6 +24,7 @@ $(document).ready(()=>{
     $("#loginErr").hide();
     var user = $("#username").val()
     var pass = $("#password").val()
+    // login in the server
     $.ajax({ 
         type: 'GET', 
         contentType: "application/json; charset=utf-8",
@@ -31,11 +32,13 @@ $(document).ready(()=>{
         success: function (data) {
             data = JSON.parse(data)
             if (data && data.uid){
+                // checking if the user name or password inccorect.
                 if(data.uid == "-1"){
                     $("#loginErr").html("Username or password is incorrect, please try again...");
                     $("#loginErr").show();
                 }
                 else{
+                    // passing to the main menu if good.
                     var query= "./MainMenu.html?uid="+data.uid+"&user="+user;
                     if(data.admin == true){
                         query+="&admin=1"
@@ -55,6 +58,7 @@ $(document).ready(()=>{
     });
 });
 
+// going to the register screen.
 $("#register").click(()=>{
         window.location = "./register.html"
 });
