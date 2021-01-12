@@ -56,8 +56,6 @@ $(document).ready(()=>{
         } else {
             my_url = "http://"+url+":"+port+'/update_user?uid=' + uid +'&pass=' + pass
         }
-        console.log(my_url)
-        console.log(123)
         $.ajax({
             type: 'POST',
             contentType: "application/json; charset=utf-8",

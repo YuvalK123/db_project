@@ -541,22 +541,23 @@ def get_all_genres():
 @app.route('/add_person', methods=['POST'])
 def add_person():
     arg = request.json
+    print(arg)
     keys = arg.keys()
     try:
         cursor = db.cursor()
     except Exception as e:
         print("problem connecting", e)
-        return "500"
+        return json.dumps([500])
     name = arg["name"] if "name" in keys else ''
     if name == '':
-        return "-1"
+        return json.dumps(["Name of personality was not given"])
     does_exist = select_query(query=f"SELECT id FROM people_info WHERE name='{name}'", is_many=False, cursor=cursor)
     if not does_exist:
         bornin = arg['bornin'] if 'bornin' in keys else None
         diedin = arg['diedin'] if 'diedin' in keys else None
         gender = arg['gender'] if 'gender' in keys else 'f'
         if not (bornin or diedin):
-            return "-1"
+            return json.dumps(["At least one location must be given!<br>After inserting the data please try again!"])
         # insert to people_info
         born = add_location(bornin, cursor=cursor) if bornin else "NULL"
         died = add_location(diedin, cursor=cursor) if bornin else "NULL"
@@ -574,20 +575,20 @@ def add_person():
             rows = insert_query(query=person_query, cursor=cursor)
             pid = cursor.lastrowid
         except Exception as e:
-            return DatabaseError(e)
+            return json.dumps([500])
     else:
         pid = does_exist[0]
     # no movie to add, se we're done
     movie = arg["movie"] if "movie" in keys else ''
     if movie == '':
-        return str(pid)
+        return json.dumps(["The given data was successfully saved!"])
     job = arg["job"] if "job" in keys else '0'
     genres = arg["genres"] if "genres" in keys else ''
     # add movie
     movie_query = f"INSERT INTO movies (movieName) VALUES ('{movie}')"
     rows = insert_query(query=movie_query, cursor=cursor)
     if rows < 1:
-        return "-1"
+        return json.dumps(["The movie insertion went wrong, please try again!"])
     movie_id = cursor.lastrowid
     # add person movie
     if not job:
@@ -597,9 +598,9 @@ def add_person():
         rows = insert_query(query=query, cursor=cursor)
     # if movie has no genres, return person's id
     if not genres:
-        return str(pid)
-    if len(genres) <=0:
-        return str(pid)
+        return json.dumps(["The given data was successfully saved!"])
+    if len(genres) <= 0:
+        return json.dumps(["The given data was successfully saved!"])
     # add genres
     # genres = [genres list]
     genres_str = ", ".join([f"'{g}'" for g in genres])
@@ -609,7 +610,11 @@ def add_person():
         genres_values = [(movie_id, g) for g in genres_ids]
         insert = f"INSERT INTO movies_genres (movieId, genreId) VALUES (%s, %s)"
         rows = insert_query(query=insert, cursor=cursor, execmany=genres_values)
-    return str(pid)
+        if rows > 0:
+            return json.dumps(["The given data was successfully saved!"])
+        else:
+            return json.dumps(["Something went wrong with inserting the genres, please try again!"])
+    return json.dumps(["Something went wrong with inserting the genres, please try again!"])
 
 
 @app.route('/')
